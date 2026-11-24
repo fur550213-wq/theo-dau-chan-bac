@@ -1,0 +1,2893 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bản Đồ Số Tương Tác — Hành Trình 30 Năm Tìm Đường Cứu Nước (1911–1941)</title>
+
+    <!-- Google Fonts hỗ trợ tiếng Việt sắc nét -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&display=swap" rel="stylesheet">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        paper: '#F9F5EB',
+                        paperDark: '#EFE8D8',
+                        crimson: '#9B1C1C',
+                        crimsonDark: '#7A1414',
+                        gold: '#C59B27',
+                        goldLight: '#E5C667',
+                        ink: '#1F2937',
+                        inkSoft: '#4B5563'
+                    },
+                    fontFamily: {
+                        serif: ['"Playfair Display"', 'Georgia', 'serif'],
+                        sans: ['"Be Vietnam Pro"', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Custom CSS phong cách bảo tàng lịch sử & hoạt ảnh hành trình -->
+    <style>
+        body {
+            background-color: #F9F5EB;
+            color: #1F2937;
+            font-family: 'Be Vietnam Pro', sans-serif;
+            overflow: hidden;
+        }
+
+        .leaflet-container {
+            background-color: #D7E2E4;
+            font-family: 'Be Vietnam Pro', sans-serif;
+        }
+
+        /* Sắc thái bản đồ lịch sử nhẹ nhàng theo giai đoạn (chỉ áp dụng ở chế độ Địa lý tự nhiên) */
+        .map-era-1 .leaflet-tile-pane {
+            filter: sepia(30%) contrast(98%) brightness(99%) saturate(85%);
+            transition: filter 0.6s ease;
+        }
+        .map-era-2 .leaflet-tile-pane {
+            filter: sepia(20%) contrast(101%) brightness(99%) saturate(92%);
+            transition: filter 0.6s ease;
+        }
+        .map-era-3 .leaflet-tile-pane {
+            filter: sepia(14%) contrast(105%) brightness(96%) saturate(82%);
+            transition: filter 0.6s ease;
+        }
+        .map-raw-tile .leaflet-tile-pane {
+            filter: none !important;
+            transition: filter 0.4s ease;
+        }
+
+        /* Nút Zoom của Leaflet theo tông bảo tàng */
+        .leaflet-control-zoom {
+            border: 1px solid rgba(197, 155, 39, 0.55) !important;
+            border-radius: 12px !important;
+            overflow: hidden;
+            box-shadow: 0 4px 14px rgba(31, 41, 55, 0.14) !important;
+        }
+        .leaflet-control-zoom a {
+            background-color: #F9F5EB !important;
+            color: #1F2937 !important;
+            border-bottom: 1px solid rgba(197, 155, 39, 0.3) !important;
+            transition: all 0.2s ease;
+        }
+        .leaflet-control-zoom a:hover {
+            background-color: #9B1C1C !important;
+            color: #F9F5EB !important;
+        }
+
+        /* Marker 10 chặng hành trình */
+        .museum-marker {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            border-radius: 9999px;
+            background: #9B1C1C;
+            color: #F9F5EB;
+            font-weight: 700;
+            font-size: 12px;
+            border: 2.5px solid #F9F5EB;
+            box-shadow: 0 4px 12px rgba(155, 28, 28, 0.45);
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease;
+            position: relative;
+            cursor: pointer;
+        }
+        .museum-marker:hover {
+            transform: scale(1.16);
+            background: #7A1414;
+        }
+        .museum-marker.active {
+            background: #C59B27;
+            color: #1F2937;
+            border: 3px solid #9B1C1C;
+            transform: scale(1.28);
+            box-shadow: 0 0 0 6px rgba(197, 155, 39, 0.36), 0 6px 18px rgba(155, 28, 28, 0.48);
+        }
+        .museum-marker.active::after {
+            content: '';
+            position: absolute;
+            inset: -8px;
+            border-radius: 9999px;
+            border: 2px solid #9B1C1C;
+            animation: markerPulse 2s infinite;
+        }
+        .museum-marker.dimmed {
+            opacity: 0.35;
+            background: #6B7280;
+            box-shadow: none;
+        }
+        .museum-marker.locked {
+            background: #4B5563;
+            color: #E5E7EB;
+            border: 2px solid #D1D5DB;
+            box-shadow: 0 3px 8px rgba(31, 41, 55, 0.3);
+            opacity: 0.85;
+        }
+        .museum-marker.locked:hover {
+            background: #374151;
+            transform: scale(1.1);
+        }
+        .museum-marker.next-unlock {
+            background: #7A1414;
+            color: #FDE047;
+            border: 2.5px dashed #E5C667;
+            box-shadow: 0 0 0 4px rgba(197, 155, 39, 0.35), 0 4px 12px rgba(155, 28, 28, 0.45);
+        }
+        .museum-marker.next-unlock:hover {
+            transform: scale(1.18);
+            background: #9B1C1C;
+        }
+
+        /* Phương tiện di chuyển (Tàu thủy / Tàu hỏa) chạy dọc tuyến đường */
+        .travel-vehicle-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            border-radius: 9999px;
+            background: #9B1C1C;
+            border: 3px solid #F9F5EB;
+            box-shadow: 0 0 0 4px rgba(197, 155, 39, 0.55), 0 6px 16px rgba(0, 0, 0, 0.4);
+            font-size: 20px;
+            line-height: 1;
+            position: relative;
+        }
+        .travel-vehicle-wrap.paused-pulse::after {
+            content: '';
+            position: absolute;
+            inset: -12px;
+            border-radius: 9999px;
+            border: 3px solid #C59B27;
+            background: rgba(197, 155, 39, 0.2);
+            animation: checkpointBeacon 1.3s ease-out infinite;
+        }
+
+        /* Chấm đánh dấu 3 trạm kiểm tra trên chặng đang di chuyển */
+        .checkpoint-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 9999px;
+            background: #F9F5EB;
+            border: 3px solid #C59B27;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+            transition: all 0.25s ease;
+        }
+        .checkpoint-dot.passed {
+            background: #059669;
+            border-color: #ECFDF5;
+        }
+        .checkpoint-dot.current {
+            background: #C59B27;
+            border-color: #9B1C1C;
+            transform: scale(1.35);
+        }
+
+        @keyframes markerPulse {
+            0% { transform: scale(0.9); opacity: 0.9; }
+            100% { transform: scale(1.55); opacity: 0; }
+        }
+        @keyframes checkpointBeacon {
+            0% { transform: scale(0.8); opacity: 0.95; }
+            100% { transform: scale(1.75); opacity: 0; }
+        }
+        @keyframes shakeWrong {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+        .animate-shake {
+            animation: shakeWrong 0.36s ease-in-out;
+        }
+        @keyframes popIn {
+            from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .animate-pop-in {
+            animation: popIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* Nhãn địa chính trị lịch sử trên bản đồ */
+        .geo-era-label {
+            background: transparent;
+            border: none;
+            pointer-events: none;
+        }
+        .geo-era-label-inner {
+            display: inline-block;
+            padding: 2px 7px;
+            border-radius: 6px;
+            font-family: 'Playfair Display', Georgia, serif;
+            font-weight: 700;
+            font-size: 11px;
+            white-space: nowrap;
+            text-align: center;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        /* Tooltip Leaflet */
+        .museum-tooltip {
+            background-color: #1F2937 !important;
+            color: #F9F5EB !important;
+            border: 1px solid #C59B27 !important;
+            border-radius: 8px !important;
+            padding: 4px 10px !important;
+            font-size: 12px !important;
+            font-weight: 500 !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.28) !important;
+        }
+        .leaflet-tooltip-top.museum-tooltip::before {
+            border-top-color: #1F2937 !important;
+        }
+
+        /* Hiệu ứng dòng chảy tuyến đường */
+        @keyframes dashFlow {
+            to { stroke-dashoffset: -44; }
+        }
+        .animated-route {
+            animation: dashFlow 2.2s linear infinite;
+        }
+
+        /* Thanh cuộn mảnh tinh tế */
+        .custom-scroll::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: rgba(197, 155, 39, 0.55);
+            border-radius: 9999px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: #9B1C1C;
+        }
+
+        /* ==================== MÀN HÌNH MENU MỞ ĐẦU (THEO DẤU CHÂN BÁC) ==================== */
+        #menu-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: radial-gradient(circle at center, #3b0808 0%, #140303 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            opacity: 1;
+            transform: scale(1);
+            transition: opacity 600ms cubic-bezier(0.22, 1, 0.36, 1),
+                        transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        #menu-screen.menu-exit {
+            opacity: 0;
+            transform: scale(1.06);
+            pointer-events: none;
+        }
+        #menu-screen.menu-hidden {
+            display: none;
+        }
+        #ember-canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 4;
+        }
+        .menu-stage-16x9 {
+            position: relative;
+            z-index: 3;
+            width: min(100vw, calc(100vh * 16 / 9));
+            aspect-ratio: 16 / 9;
+            max-height: 100vh;
+            background: #140303;
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.82);
+            overflow: hidden;
+        }
+        #menuHeroImage {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            z-index: 2;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+        #menuHeroImage.hidden {
+            display: none;
+        }
+
+        /* Nền thiết kế sử thi tích hợp sẵn (hiển thị mặc định khi chưa có file tieu de.png) */
+        .menu-builtin-bg {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            background:
+                radial-gradient(ellipse 68% 62% at 50% 42%, rgba(210, 32, 32, 0.92) 0%, rgba(145, 16, 16, 0.88) 46%, rgba(45, 5, 5, 0.97) 85%, #140303 100%);
+            overflow: hidden;
+        }
+        .menu-flag-waves {
+            position: absolute;
+            inset: -8%;
+            background:
+                repeating-linear-gradient(
+                    -18deg,
+                    rgba(255, 255, 255, 0.045) 0%,
+                    rgba(0, 0, 0, 0.18) 12%,
+                    rgba(255, 196, 60, 0.05) 24%,
+                    rgba(0, 0, 0, 0.22) 38%
+                );
+            animation: flagWaveDrift 14s ease-in-out infinite alternate;
+            mix-blend-mode: overlay;
+        }
+        @keyframes flagWaveDrift {
+            0% { transform: translateX(-2%) skewY(-1deg) scale(1.03); }
+            100% { transform: translateX(2%) skewY(1deg) scale(1.06); }
+        }
+        .menu-vignette {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 50% 45%, transparent 34%, rgba(12, 2, 2, 0.78) 100%);
+            pointer-events: none;
+        }
+        .menu-title-3d {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-weight: 800;
+            font-size: clamp(1.75rem, 5.4vw, 4.75rem);
+            line-height: 1.08;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            background: linear-gradient(180deg, #FFF7CC 0%, #F5C542 36%, #D4941A 68%, #8F5608 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            filter: drop-shadow(0 4px 0 rgba(58, 12, 8, 0.95))
+                    drop-shadow(0 10px 24px rgba(0, 0, 0, 0.75));
+        }
+        .menu-gold-bar {
+            height: 2px;
+            background: linear-gradient(90deg, transparent 0%, #F5C542 22%, #FFF3B0 50%, #F5C542 78%, transparent 100%);
+            box-shadow: 0 0 12px rgba(245, 197, 66, 0.65);
+        }
+
+        /* Nút START khớp chính xác 100% vị trí ô START trong ảnh gốc & nền tích hợp */
+        #start-btn {
+            position: absolute;
+            left: 50%;
+            top: 78.6%;
+            transform: translate(-50%, -50%);
+            width: 22%;
+            height: 7.6%;
+            min-width: 148px;
+            min-height: 38px;
+            border-radius: 5px;
+            cursor: pointer;
+            outline: none;
+            z-index: 6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+            animation: startPulseGlow 2.4s ease-in-out infinite;
+        }
+        /* Kiểu nút khi đang dùng nền thiết kế tích hợp sẵn */
+        #start-btn.mode-builtin {
+            background: linear-gradient(180deg, rgba(36, 20, 16, 0.92) 0%, rgba(16, 8, 6, 0.96) 100%);
+            border: 1.5px solid rgba(245, 197, 66, 0.85);
+            box-shadow: 0 8px 26px rgba(0, 0, 0, 0.65), inset 0 0 14px rgba(245, 197, 66, 0.18);
+        }
+        /* Kiểu nút trong suốt khớp khung khi đang hiển thị ảnh gốc tieu de.png */
+        #start-btn.mode-image {
+            background: rgba(245, 197, 66, 0.04);
+            border: 1.5px solid rgba(245, 197, 66, 0.5);
+        }
+        #start-btn:hover,
+        #start-btn:focus-visible {
+            box-shadow: 0 0 30px rgba(245, 197, 66, 0.85), inset 0 0 16px rgba(255, 215, 90, 0.28);
+            border-color: rgba(255, 224, 115, 0.98);
+            background: rgba(245, 197, 66, 0.18);
+            transform: translate(-50%, -50%) scale(1.03);
+            animation: none;
+        }
+        #start-btn:active {
+            transform: translate(-50%, -50%) scale(0.985);
+        }
+        @keyframes startPulseGlow {
+            0%, 100% {
+                box-shadow: 0 0 12px rgba(245, 197, 66, 0.32), inset 0 0 6px rgba(245, 197, 66, 0.1);
+                border-color: rgba(245, 197, 66, 0.55);
+            }
+            50% {
+                box-shadow: 0 0 24px rgba(245, 197, 66, 0.68), inset 0 0 12px rgba(245, 197, 66, 0.2);
+                border-color: rgba(255, 220, 102, 0.92);
+            }
+        }
+        .menu-hint-badge {
+            position: absolute;
+            bottom: 3%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 6;
+            font-size: clamp(10px, 1.05vw, 12px);
+            color: rgba(249, 245, 235, 0.8);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+            pointer-events: none;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col bg-paper text-ink select-none md:select-auto">
+
+    <!-- ==================== MÀN HÌNH MENU MỞ ĐẦU (THEO DẤU CHÂN BÁC) ==================== -->
+    <section id="menu-screen" aria-label="Màn hình khởi động Theo Dấu Chân Bác">
+        <!-- Hiệu ứng hạt lửa vàng bay nhẹ -->
+        <canvas id="ember-canvas" aria-hidden="true"></canvas>
+
+        <!-- Khung sân khấu chuẩn tỷ lệ 16:9 -->
+        <div class="menu-stage-16x9">
+            <!-- Chế độ 1: Ảnh gốc tieu de.png hoặc ảnh người dùng tải lên (ẩn cho đến khi tải thành công) -->
+            <img
+                id="menuHeroImage"
+                class="hidden"
+                alt="Theo Dấu Chân Bác — Hành trình 30 năm tìm đường cứu nước (1911–1941)"
+            />
+
+            <!-- Chế độ 2: Nền thiết kế sử thi cờ đỏ búa liềm + tiêu đề kim loại 3D tích hợp sẵn -->
+            <div id="menuBuiltinBg" class="menu-builtin-bg flex flex-col items-center justify-center px-6 text-center">
+                <div class="menu-flag-waves"></div>
+
+                <!-- Biểu tượng Búa Liềm ánh vàng lớn chìm đầy uy nghiêm -->
+                <svg class="absolute w-[38%] max-w-[420px] opacity-20 -translate-y-4 pointer-events-none select-none" viewBox="0 0 200 200" fill="none" aria-hidden="true">
+                    <defs>
+                        <linearGradient id="epicGoldGrad" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#FFF5B8"/>
+                            <stop offset="50%" stop-color="#F5C542"/>
+                            <stop offset="100%" stop-color="#B87314"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="M112 30c32 10 54 40 50 75-4 38-38 66-76 62-17-2-32-10-43-22l14-14c9 9 20 15 33 16 26 2 49-16 52-42 3-24-12-45-34-53l4-22z" fill="url(#epicGoldGrad)"/>
+                    <path d="M46 144l14 14-18 18c-4 4-10 4-14 0s-4-10 0-14l18-18z" fill="url(#epicGoldGrad)"/>
+                    <path d="M68 52l22-22 30 30-14 14-10-10-40 40 62 62-14 14-62-62-12 12-14-14 52-52-10-10 10-12z" fill="url(#epicGoldGrad)"/>
+                </svg>
+
+                <!-- Luồng sáng tỏa từ trung tâm -->
+                <div class="menu-vignette"></div>
+
+                <!-- Khối Tiêu đề 3D ánh kim + Ngôi sao 5 cánh -->
+                <div class="relative z-10 flex flex-col items-center -mt-[6%] w-full max-w-[84%]">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="w-8 sm:w-14 h-[1.5px] bg-gradient-to-r from-transparent to-goldLight"></span>
+                        <svg class="w-7 h-7 sm:w-10 sm:h-10 text-goldLight drop-shadow-[0_0_12px_rgba(245,197,66,0.9)]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
+                        <span class="w-8 sm:w-14 h-[1.5px] bg-gradient-to-l from-transparent to-goldLight"></span>
+                    </div>
+
+                    <div class="menu-gold-bar w-[76%] mb-2 sm:mb-3"></div>
+                    <h1 class="menu-title-3d">THEO DẤU CHÂN BÁC</h1>
+                    <div class="menu-gold-bar w-[76%] mt-2 sm:mt-3"></div>
+
+                    <p class="mt-3 text-[10px] sm:text-xs md:text-sm uppercase tracking-[0.26em] text-paper/90 font-semibold drop-shadow-[0_2px_6px_rgba(0,0,0,0.85)]">
+                        Hành Trình 30 Năm Tìm Đường Cứu Nước • 1911 – 1941
+                    </p>
+                </div>
+            </div>
+
+            <!-- Nút START tương tác (khớp 100% vị trí START trong ảnh gốc lẫn nền tích hợp) -->
+            <button
+                id="start-btn"
+                type="button"
+                class="mode-builtin"
+                aria-label="Bắt đầu hành trình"
+                title="Nhấn START hoặc phím Enter để vào bản đồ số"
+            >
+                <span id="startBtnText" class="text-goldLight font-bold tracking-[0.28em] text-xs sm:text-sm md:text-base drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]">
+                    START
+                </span>
+            </button>
+
+            <div class="menu-hint-badge">Nhấn START hoặc phím Enter để bắt đầu hành trình</div>
+        </div>
+
+        <!-- Nút tinh tế góc dưới phải cho phép người dùng tải trực tiếp file tieu de.png từ máy tính -->
+        <div class="fixed bottom-3 right-3 sm:bottom-4 sm:right-4 z-10 flex items-center gap-2">
+            <input id="menuBgFileInput" type="file" accept="image/*" class="hidden" />
+            <button
+                id="btnResetMenuBg"
+                type="button"
+                class="hidden px-2.5 py-1.5 rounded-lg bg-black/55 hover:bg-black/80 text-paper/80 hover:text-paper border border-gold/35 text-[11px] font-medium backdrop-blur-sm transition-all cursor-pointer"
+                title="Quay lại nền sử thi mặc định"
+            >
+                Khôi phục nền mặc định
+            </button>
+            <button
+                id="btnUploadMenuBg"
+                type="button"
+                class="px-3 py-1.5 rounded-lg bg-black/55 hover:bg-crimson/90 text-goldLight hover:text-paper border border-gold/45 text-[11px] font-semibold backdrop-blur-sm flex items-center gap-1.5 transition-all cursor-pointer shadow-lg"
+                title="Chọn file ảnh nền tieu de.png từ máy tính của bạn"
+            >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <span>Tải ảnh nền (tieu de.png)</span>
+            </button>
+        </div>
+    </section>
+
+    <!-- ==================== GIAO DIỆN CHÍNH BẢN ĐỒ SỐ TƯƠNG TÁC ==================== -->
+    <div id="app-screen" class="h-full w-full flex flex-col">
+
+    <!-- ==================== HEADER MẢNH GỌN (~56px) ==================== -->
+    <header class="z-30 h-14 bg-paper/95 backdrop-blur-md border-b border-gold/45 shadow-sm px-3 sm:px-5 flex items-center justify-between gap-2 shrink-0">
+        <!-- Tiêu đề dự án -->
+        <div class="flex items-center gap-2.5 min-w-0">
+            <div class="w-9 h-9 rounded-xl bg-crimson flex items-center justify-center shadow-sm border border-gold/65 shrink-0">
+                <svg class="w-4 h-4 text-goldLight" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+            </div>
+            <div class="min-w-0">
+                <h1 class="font-serif font-bold text-sm sm:text-base lg:text-lg text-crimson leading-tight truncate">
+                    Hành Trình 30 Năm Tìm Đường Cứu Nước
+                </h1>
+                <p class="text-[11px] text-inkSoft font-medium truncate hidden sm:block">
+                    Bản đồ Lịch sử Thế giới (1911–1941) • Môn Tư tưởng Hồ Chí Minh
+                </p>
+            </div>
+        </div>
+
+        <!-- Bộ lọc nhanh 3 giai đoạn (Desktop) -->
+        <nav aria-label="Bộ lọc giai đoạn" class="hidden lg:flex items-center bg-paperDark/85 p-1 rounded-xl border border-gold/35 gap-1">
+            <button data-phase="all" class="phase-btn px-2.5 py-1 rounded-lg text-xs font-semibold transition-all bg-crimson text-paper shadow-sm cursor-pointer">
+                Tất cả
+            </button>
+            <button data-phase="1911-1920" class="phase-btn px-2.5 py-1 rounded-lg text-xs font-medium text-ink hover:bg-paper transition-all cursor-pointer">
+                1911–1920
+            </button>
+            <button data-phase="1921-1930" class="phase-btn px-2.5 py-1 rounded-lg text-xs font-medium text-ink hover:bg-paper transition-all cursor-pointer">
+                1921–1930
+            </button>
+            <button data-phase="1930-1941" class="phase-btn px-2.5 py-1 rounded-lg text-xs font-medium text-ink hover:bg-paper transition-all cursor-pointer">
+                1930–1941
+            </button>
+        </nav>
+
+        <!-- Tiện ích bên phải: Tiến độ, Menu, Toàn cảnh & Mở khóa nhanh -->
+        <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <!-- Chỉ số tiến độ mở khóa trên Header -->
+            <span id="headerProgressBadge" class="hidden md:inline-flex items-center px-2.5 py-1 rounded-xl bg-crimson/10 border border-crimson/25 text-crimsonDark text-[11px] font-bold">
+                Đã mở: 1/10
+            </span>
+
+            <!-- Bộ lọc rút gọn cho màn hình nhỏ hơn lg -->
+            <select id="mobilePhaseSelect" aria-label="Chọn giai đoạn" class="lg:hidden bg-paperDark border border-gold/45 text-ink text-xs font-semibold rounded-lg px-2 py-1.5 outline-none">
+                <option value="all">Tất cả (10)</option>
+                <option value="1911-1920">1911–1920</option>
+                <option value="1921-1930">1921–1930</option>
+                <option value="1930-1941">1930–1941</option>
+            </select>
+
+            <button id="btnBackToMenu" type="button" title="Quay lại màn hình tiêu đề Theo Dấu Chân Bác" class="px-2.5 py-1.5 rounded-xl bg-paperDark hover:bg-crimson hover:text-paper border border-gold/45 text-ink text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer group">
+                <svg class="w-4 h-4 text-crimson group-hover:text-goldLight transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+                <span class="hidden sm:inline">Menu</span>
+            </button>
+
+            <button id="btnOverview" type="button" title="Xem toàn cảnh bản đồ" class="px-2.5 py-1.5 rounded-xl bg-paperDark hover:bg-gold/25 border border-gold/45 text-ink text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer">
+                <svg class="w-4 h-4 text-crimson" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span class="hidden sm:inline">Toàn cảnh</span>
+            </button>
+
+            <button id="btnQuickUnlock" type="button" title="Chế độ Giảng viên/Thuyết trình: Mở khóa nhanh toàn bộ 10 chặng" class="px-2.5 sm:px-3 py-1.5 rounded-xl bg-gold/25 hover:bg-gold/40 border border-gold/60 text-crimsonDark text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer">
+                <svg id="quickUnlockIcon" class="w-3.5 h-3.5 text-crimson" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/>
+                </svg>
+                <span id="quickUnlockText">Mở khóa nhanh</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- ==================== KHU VỰC CHÍNH SPLIT-SCREEN ==================== -->
+    <main class="relative flex-1 flex overflow-hidden">
+        <!-- BÊN TRÁI (~68%): BẢN ĐỒ THỰC TẾ THOÁNG ĐÃNG (KHÔNG CÒN KHUNG CHÚ GIẢI GÓC TRÁI) -->
+        <div class="relative flex-1 h-full w-full">
+            <div id="map" class="h-full w-full z-10 map-era-1"></div>
+
+            <!-- Thanh trạng thái nổi phía trên giữa khi phương tiện đang chạy giữa các trạm -->
+            <div id="travelStatusPill" class="hidden absolute top-3.5 left-1/2 -translate-x-1/2 z-20 bg-ink/92 text-paper border border-gold/75 rounded-full px-4 py-2 shadow-xl flex items-center gap-2.5 text-xs font-semibold animate-pop-in">
+                <span id="travelStatusEmoji" class="text-base leading-none">🚢</span>
+                <span id="travelStatusText" class="whitespace-nowrap">Đang hành trình tới Trạm kiểm tra 1/3...</span>
+                <button id="btnCancelTravel" type="button" title="Hủy di chuyển" class="ml-1 text-goldLight hover:text-white text-[11px] underline cursor-pointer">
+                    Hủy
+                </button>
+            </div>
+
+            <!-- Thông báo Toast gọn gàng (không dùng alert) -->
+            <div id="appToast" class="hidden absolute top-3.5 left-1/2 -translate-x-1/2 z-30 max-w-md w-[92%] sm:w-auto bg-ink/95 text-paper border border-gold/70 rounded-2xl px-4 py-2.5 shadow-2xl flex items-center gap-3 animate-pop-in">
+                <span class="w-2.5 h-2.5 rounded-full bg-gold shrink-0"></span>
+                <p id="appToastText" class="flex-1 text-xs leading-snug font-medium"></p>
+                <button id="btnToastAction" type="button" class="hidden shrink-0 px-2.5 py-1 rounded-lg bg-gold hover:bg-goldLight text-ink text-[11px] font-bold transition-colors cursor-pointer">
+                    Khởi hành ngay
+                </button>
+                <button id="btnCloseToast" type="button" aria-label="Đóng thông báo" class="text-paper/65 hover:text-paper p-0.5 cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- NÚT ICON NHỎ GỌN GÓC TRÊN PHẢI ĐỂ MỞ POPOVER CHỌN NỀN BẢN ĐỒ -->
+            <div id="layerPopoverContainer" class="absolute top-3.5 right-3.5 z-20 flex flex-col items-end">
+                <button
+                    id="btnMapLayerIcon"
+                    type="button"
+                    title="Nền bản đồ & Lớp lịch sử"
+                    aria-label="Nền bản đồ & Lớp lịch sử"
+                    aria-expanded="false"
+                    class="group relative w-11 h-11 rounded-2xl bg-paper/95 hover:bg-crimson text-crimson hover:text-paper border-2 border-gold/70 shadow-lg flex items-center justify-center transition-all duration-200 cursor-pointer"
+                >
+                    <svg class="w-5 h-5 transition-transform duration-200 group-hover:scale-110" fill="none" stroke="currentColor" stroke-width="2.1" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                    </svg>
+                    <span class="pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute right-full mr-2.5 top-1/2 -translate-y-1/2 whitespace-nowrap bg-ink text-paper text-[11px] font-semibold px-2.5 py-1 rounded-lg border border-gold/60 shadow-md">
+                        Nền bản đồ &amp; Lớp lịch sử
+                    </span>
+                </button>
+
+                <!-- Popover đầy đủ (ẩn mặc định, tự đóng khi bấm ra ngoài) -->
+                <div id="mapLayerPopover" class="hidden mt-2 flex-col gap-2.5 bg-paper/98 backdrop-blur-md border-2 border-gold/65 rounded-2xl p-3.5 shadow-2xl w-[264px] animate-pop-in">
+                    <div class="flex items-center justify-between gap-2 border-b border-gold/35 pb-2">
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-crimson"></span>
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-crimson">Nền Bản Đồ Thực Tế</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span id="activeEraPill" class="px-1.5 py-0.5 rounded bg-gold/25 text-ink text-[10px] font-bold">1911–1920</span>
+                            <button id="btnCloseLayerPopover" type="button" aria-label="Đóng bảng chọn nền" class="p-1 rounded-lg hover:bg-paperDark text-inkSoft hover:text-crimson transition-colors cursor-pointer">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 3 lớp nền bản đồ thực tế -->
+                    <div class="flex flex-col gap-1.5">
+                        <button data-basemap="physical" class="basemap-btn w-full text-left px-3 py-2 rounded-xl text-xs font-semibold bg-crimson text-paper shadow-sm transition-all flex items-center gap-2.5 cursor-pointer">
+                            <span class="w-2.5 h-2.5 rounded-full bg-goldLight shrink-0"></span>
+                            <span>Địa lý tự nhiên (Mặc định)</span>
+                        </button>
+                        <button data-basemap="satellite" class="basemap-btn w-full text-left px-3 py-2 rounded-xl text-xs font-medium text-ink hover:bg-paperDark transition-all flex items-center gap-2.5 cursor-pointer">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-600 shrink-0"></span>
+                            <span>Vệ tinh thực tế (Imagery)</span>
+                        </button>
+                        <button data-basemap="atlas" class="basemap-btn w-full text-left px-3 py-2 rounded-xl text-xs font-medium text-ink hover:bg-paperDark transition-all flex items-center gap-2.5 cursor-pointer">
+                            <span class="w-2.5 h-2.5 rounded-full bg-amber-600 shrink-0"></span>
+                            <span>Địa hình Atlas (Topo)</span>
+                        </button>
+                    </div>
+
+                    <!-- Công tắc bật/tắt lớp địa chính trị & tuyến đường -->
+                    <div class="pt-2 border-t border-gold/35 space-y-2.5">
+                        <div class="flex items-center justify-between gap-2">
+                            <label for="toggleGeoLayer" class="text-[11px] font-semibold text-ink cursor-pointer select-none leading-snug">
+                                Địa chính trị theo giai đoạn
+                            </label>
+                            <button id="toggleGeoLayer" type="button" role="switch" aria-checked="true" class="relative inline-flex h-5 w-9 items-center rounded-full bg-crimson transition-colors cursor-pointer shrink-0">
+                                <span id="toggleGeoKnob" class="inline-block h-3.5 w-3.5 transform rounded-full bg-paper transition-transform translate-x-4"></span>
+                            </button>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-2">
+                            <label for="toggleRouteLayer" class="text-[11px] font-semibold text-ink cursor-pointer select-none leading-snug">
+                                Tuyến đường hành trình
+                            </label>
+                            <button id="toggleRouteLayer" type="button" role="switch" aria-checked="true" class="relative inline-flex h-5 w-9 items-center rounded-full bg-crimson transition-colors cursor-pointer shrink-0">
+                                <span id="toggleRouteKnob" class="inline-block h-3.5 w-3.5 transform rounded-full bg-paper transition-transform translate-x-4"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Nút mở lại bảng chi tiết trên Mobile -->
+            <button id="btnOpenMobilePanel" type="button" class="md:hidden hidden fixed bottom-20 right-4 z-20 bg-crimson text-paper px-4 py-2.5 rounded-full shadow-lg border border-gold/60 text-xs font-semibold flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span>Xem thông tin chặng</span>
+            </button>
+        </div>
+
+        <!-- ==================== BÊN PHẢI (~395px–420px): BẢNG NỘI DUNG VỪA MẮT, CHUYÊN NGHIỆP ==================== -->
+        <aside id="detailPanel" class="fixed md:static inset-x-0 bottom-0 md:inset-auto z-30 md:z-20 w-full md:w-[395px] lg:w-[420px] max-h-[82vh] md:max-h-none md:h-full bg-paper border-t-2 md:border-t-0 md:border-l border-gold/50 shadow-2xl md:shadow-none flex flex-col rounded-t-3xl md:rounded-none transition-transform duration-300 ease-out shrink-0">
+            <!-- Thanh kéo thu gọn trên Mobile -->
+            <div class="md:hidden flex items-center justify-center pt-2.5 pb-1 relative shrink-0">
+                <div class="w-10 h-1.5 rounded-full bg-gold/50"></div>
+                <button id="btnCloseMobilePanel" type="button" aria-label="Thu gọn bảng thông tin" class="absolute right-4 top-2 p-1.5 rounded-full bg-paperDark text-inkSoft hover:text-crimson">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- 1. HEADER CỦA PANEL: Huy hiệu chặng, Giai đoạn, Tiêu đề, Thời gian & Tiến độ -->
+            <div class="px-6 pt-4 pb-4 border-b border-gold/30 bg-gradient-to-b from-paperDark/55 to-paper shrink-0">
+                <div class="flex items-center justify-between gap-2 mb-2.5">
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <span id="detailOrderBadge" class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-crimson text-paper text-[11px] font-bold tracking-wide">
+                            Chặng 01
+                        </span>
+                        <span id="detailPhaseTag" class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-paperDark text-inkSoft border border-gold/35 text-[11px] font-semibold">
+                            1911–1920
+                        </span>
+                    </div>
+                    <span id="panelProgressBadge" class="inline-flex items-center gap-1 text-[11px] font-bold text-crimsonDark bg-gold/20 border border-gold/40 px-2.5 py-0.5 rounded-full shrink-0">
+                        1/10 chặng
+                    </span>
+                </div>
+
+                <h2 id="detailTitle" class="font-serif font-bold text-xl text-ink leading-snug">
+                    Bến Nhà Rồng – Sài Gòn
+                </h2>
+
+                <div class="flex items-center gap-3 mt-2 text-xs text-inkSoft font-medium">
+                    <span class="inline-flex items-center gap-1 text-crimson font-semibold">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.1" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        <span id="detailDate">05/06/1911</span>
+                    </span>
+                    <span class="text-gold/70">•</span>
+                    <span class="truncate">Bí danh: <strong id="detailAlias" class="text-ink">Văn Ba</strong></span>
+                </div>
+            </div>
+
+            <!-- 2. THÂN PANEL CUỘN MƯỢT: Khoảng trắng thoáng, line-height 1.65 dễ đọc -->
+            <div id="detailScrollArea" class="flex-1 overflow-y-auto custom-scroll px-6 py-5 space-y-5">
+                <!-- Khối 0: Cục diện thế giới thời điểm đó -->
+                <section class="bg-paperDark/55 rounded-2xl p-3.5 border border-gold/35">
+                    <h3 class="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-crimsonDark mb-1.5">
+                        <svg class="w-3.5 h-3.5 text-crimson shrink-0" fill="none" stroke="currentColor" stroke-width="2.1" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span>Cục diện thế giới thời điểm đó</span>
+                    </h3>
+                    <p id="detailWorldSituation" class="text-[13px] text-inkSoft leading-[1.6]"></p>
+                </section>
+
+                <!-- Khối 1: Bối cảnh lịch sử -->
+                <section>
+                    <h3 class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-inkSoft mb-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-gold"></span>
+                        <span>Bối cảnh lịch sử</span>
+                    </h3>
+                    <p id="detailContext" class="text-[13.5px] text-ink leading-[1.65]"></p>
+                </section>
+
+                <hr class="border-gold/25">
+
+                <!-- Khối 2: Công việc & Hoạt động của Bác (Gạch đầu dòng gọn gàng) -->
+                <section>
+                    <h3 class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-inkSoft mb-2.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-crimson"></span>
+                        <span>Công việc &amp; Hoạt động của Bác</span>
+                    </h3>
+                    <ul id="detailWorkList" class="space-y-2 text-[13.5px] text-ink leading-[1.6]">
+                        <!-- Render gạch đầu dòng bằng JS -->
+                    </ul>
+                </section>
+
+                <!-- Khối 3: Bước chuyển biến tư tưởng (Nổi bật tinh tế với viền trái đỏ son) -->
+                <section class="bg-crimson/[0.05] rounded-2xl p-4 border-l-4 border-crimson border-y border-r border-gold/35">
+                    <h3 class="font-serif font-bold text-sm text-crimson mb-1.5 flex items-center gap-1.5">
+                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                        </svg>
+                        <span>Bước chuyển biến tư tưởng</span>
+                    </h3>
+                    <p id="detailIdeology" class="text-[13.5px] text-ink font-medium leading-[1.65]"></p>
+                </section>
+
+                <!-- Khối 4: Trích dẫn / Dấu mốc tiêu biểu -->
+                <blockquote class="bg-paperDark/65 rounded-2xl px-4 py-3.5 border border-gold/40">
+                    <div class="text-[10px] font-bold uppercase tracking-widest text-gold mb-1">
+                        Trích dẫn / Dấu mốc tiêu biểu
+                    </div>
+                    <p id="detailQuote" class="font-serif italic text-[13.5px] text-ink leading-[1.6]"></p>
+                </blockquote>
+
+                <!-- Thẻ hoàn thành hành trình (chỉ hiện khi mở khóa đủ 10/10 chặng) -->
+                <div id="journeyCompletedCard" class="hidden bg-gradient-to-br from-crimson to-crimsonDark text-paper rounded-2xl p-4 border border-gold shadow-md">
+                    <div class="text-[10px] font-bold uppercase tracking-widest text-goldLight">Hoàn thành 1911–1941 ★</div>
+                    <p class="text-xs text-paper/90 mt-1 leading-relaxed">
+                        Bạn đã vượt qua trọn vẹn 10 chặng lịch sử từ Bến Nhà Rồng đến Pác Bó (Cao Bằng).
+                    </p>
+                    <button id="btnOpenVictoryModal" type="button" class="mt-2.5 px-3 py-1.5 rounded-lg bg-gold hover:bg-goldLight text-ink text-xs font-bold transition-colors cursor-pointer">
+                        Xem Chứng Nhận Hoàn Thành
+                    </button>
+                </div>
+            </div>
+
+            <!-- 3. STICKY FOOTER CỐ ĐỊNH Ở ĐÁY PANEL -->
+            <div class="px-5 py-3.5 border-t border-gold/40 bg-paperDark/55 flex items-center gap-2.5 shrink-0">
+                <button id="btnPrevStop" type="button" class="px-3.5 py-2.5 rounded-xl bg-paper hover:bg-paperDark border border-gold/55 text-ink text-xs font-semibold flex items-center justify-center gap-1 transition-all disabled:opacity-40 cursor-pointer shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    <span>Chặng trước</span>
+                </button>
+                <button id="btnNextStop" type="button" class="flex-1 py-2.5 px-4 rounded-xl bg-crimson hover:bg-crimsonDark text-paper text-xs sm:text-[13px] font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all disabled:opacity-40 cursor-pointer">
+                    <span id="btnNextStopLabel" class="truncate">Khởi hành tới Chặng 2 →</span>
+                </button>
+            </div>
+        </aside>
+    </main>
+
+    <!-- ==================== THANH TIMELINE GỌN GÀNG Ở ĐÁY ==================== -->
+    <footer class="z-20 bg-paper border-t border-gold/45 shadow-[0_-3px_12px_rgba(31,41,55,0.05)] px-3 sm:px-5 py-2 shrink-0">
+        <div id="timelineContainer" class="flex items-center gap-1.5 overflow-x-auto custom-scroll py-0.5">
+            <!-- 10 chặng 1–10 render động bằng JS -->
+        </div>
+    </footer>
+
+    </div><!-- Kết thúc #app-screen -->
+
+    <!-- ==================== MODAL TRẮC NGHIỆM TẠI TỪNG TRẠM DỪNG (1/3 -> 2/3 -> 3/3) ==================== -->
+    <div id="quizModal" class="hidden fixed inset-0 z-50 bg-ink/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5">
+        <div class="bg-paper w-full max-w-lg rounded-3xl border-2 border-gold/75 shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-pop-in">
+            <!-- Header Modal -->
+            <div class="bg-crimson text-paper px-5 sm:px-6 py-4 flex items-center justify-between gap-3 shrink-0">
+                <div class="min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span id="quizTransportBadge" class="px-2 py-0.5 rounded-full bg-gold text-ink text-[10px] font-extrabold uppercase tracking-wide">
+                            🚢 Trạm dừng 1 / 3
+                        </span>
+                        <span id="quizRouteLabel" class="text-[11px] text-goldLight font-semibold truncate">
+                            Chặng 1 → Chặng 2
+                        </span>
+                    </div>
+                    <h2 id="quizModalTitle" class="font-serif font-bold text-base sm:text-lg leading-snug truncate">
+                        Trả lời đúng để tiếp tục hành trình
+                    </h2>
+                </div>
+                <button id="btnCloseQuiz" type="button" aria-label="Tạm dừng và đóng" class="p-1.5 rounded-full hover:bg-white/15 transition-colors cursor-pointer shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="p-5 sm:p-6 overflow-y-auto custom-scroll flex-1">
+                <!-- Thanh tiến trình 3 trạm dừng trực quan -->
+                <div class="flex items-center justify-between gap-2 mb-5 bg-paperDark/70 p-2.5 rounded-2xl border border-gold/30">
+                    <div id="stepPill0" class="flex-1 text-center py-1 rounded-xl text-[11px] font-bold transition-all">Trạm 1/3</div>
+                    <span class="text-gold/70 text-xs font-bold">→</span>
+                    <div id="stepPill1" class="flex-1 text-center py-1 rounded-xl text-[11px] font-bold transition-all">Trạm 2/3</div>
+                    <span class="text-gold/70 text-xs font-bold">→</span>
+                    <div id="stepPill2" class="flex-1 text-center py-1 rounded-xl text-[11px] font-bold transition-all">Trạm 3/3</div>
+                </div>
+
+                <!-- Câu hỏi & 4 đáp án -->
+                <h3 id="quizQuestionText" class="font-serif font-bold text-base sm:text-[17px] text-ink leading-snug mb-4"></h3>
+                <div id="quizOptions" class="space-y-2.5"></div>
+
+                <!-- Phản hồi đúng / sai -->
+                <div id="quizFeedback" class="hidden mt-4 p-3.5 rounded-2xl border text-xs sm:text-[13px] leading-relaxed"></div>
+
+                <!-- Nút tiếp tục hành trình -->
+                <div class="mt-5 flex items-center justify-between gap-3">
+                    <span id="quizRetryHint" class="text-[11px] text-crimson font-medium hidden">
+                        * Chọn lại đáp án đúng để tiếp tục đi
+                    </span>
+                    <button id="btnContinueJourney" type="button" class="hidden ml-auto px-5 py-2.5 rounded-xl bg-crimson hover:bg-crimsonDark text-paper text-xs sm:text-sm font-bold shadow-sm transition-all cursor-pointer">
+                        Tiếp tục hành trình →
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL CHÚC MỪNG HOÀN THÀNH HÀNH TRÌNH 30 NĂM ==================== -->
+    <div id="victoryModal" class="hidden fixed inset-0 z-50 bg-ink/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-paper w-full max-w-lg rounded-3xl border-2 border-gold shadow-2xl overflow-hidden text-center animate-pop-in">
+            <div class="bg-gradient-to-br from-crimson via-crimsonDark to-ink text-paper px-6 py-7">
+                <div class="w-16 h-16 mx-auto rounded-2xl bg-gold text-crimson flex items-center justify-center shadow-lg mb-3 border-2 border-paper">
+                    <svg class="w-9 h-9" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                </div>
+                <div class="text-[11px] font-bold uppercase tracking-widest text-goldLight">1911 – 1941 • 30 Năm Tìm Đường Cứu Nước</div>
+                <h2 class="font-serif font-bold text-2xl sm:text-3xl mt-1">Chúc Mừng Hoàn Thành Hành Trình!</h2>
+            </div>
+            <div class="p-6 space-y-3">
+                <p class="text-sm text-ink font-medium leading-relaxed">
+                    Bạn đã vượt qua trọn vẹn các trạm kiểm tra kiến thức và đưa Bác trở về cột mốc 108 — <strong class="text-crimson">Pác Bó, Cao Bằng (28/01/1941)</strong> sau 30 năm bôn ba tìm đường cứu nước!
+                </p>
+                <p class="text-xs text-inkSoft leading-relaxed">
+                    Toàn bộ 10 chặng lịch sử đã được mở khóa. Bạn có thể tự do xem lại bất kỳ địa danh nào trên bản đồ để phục vụ thuyết trình và ôn tập.
+                </p>
+                <div class="pt-3 flex items-center justify-center gap-3">
+                    <button id="btnVictoryOverview" type="button" class="px-5 py-2.5 rounded-xl bg-crimson hover:bg-crimsonDark text-paper text-xs sm:text-sm font-semibold shadow-sm cursor-pointer">
+                        Xem toàn cảnh hành trình
+                    </button>
+                    <button id="btnCloseVictory" type="button" class="px-5 py-2.5 rounded-xl bg-paperDark hover:bg-gold/30 text-ink text-xs sm:text-sm font-semibold border border-gold/50 cursor-pointer">
+                        Đóng
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <!-- ==================== LOGIC ỨNG DỤNG BẢN ĐỒ & DI CHUYỂN TỪNG ĐOẠN ==================== -->
+    <script>
+        (function () {
+            'use strict';
+
+            /**
+             * Dữ liệu Lớp Địa Chính Trị Lịch Sử theo 3 Giai đoạn (1911-1920, 1921-1930, 1930-1941)
+             */
+            const ERA_DATA = {
+                '1911-1920': {
+                    eraClass: 'map-era-1',
+                    shortLabel: '1911–1920',
+                    bounds: [[5, -80], [58, 118]],
+                    regions: [
+                        { name: 'Liên bang Đông Dương (Thuộc địa Pháp)', color: '#2563EB', fillOpacity: 0.30, labelCoords: [15.5, 106.5], labelBg: 'rgba(37,99,235,0.88)', labelColor: '#FFF', polygon: [[102.1,22.8],[105.5,23.3],[108.0,21.5],[109.4,13.0],[106.8,10.2],[104.8,8.6],[102.6,11.8],[103.5,14.5],[100.3,20.5],[102.1,22.8]] },
+                        { name: 'Đế quốc Thực dân Pháp', color: '#2563EB', fillOpacity: 0.28, labelCoords: [46.5, 2.2], labelBg: 'rgba(37,99,235,0.88)', labelColor: '#FFF', polygon: [[-4.8,48.4],[2.5,51.0],[8.1,49.0],[7.5,43.8],[3.2,42.4],[-1.8,43.4],[-4.8,48.4]] },
+                        { name: 'Tây & Bắc Phi (Thuộc địa Pháp)', color: '#3B82F6', fillOpacity: 0.20, labelCoords: [20.5, -2.0], labelBg: 'rgba(37,99,235,0.80)', labelColor: '#FFF', polygon: [[-17.2,14.7],[-13.0,27.6],[-5.5,35.8],[11.0,37.0],[11.5,23.5],[16.0,14.0],[13.5,4.0],[2.5,6.3],[-8.0,4.5],[-17.2,14.7]] },
+                        { name: 'Đế quốc Anh', color: '#D97706', fillOpacity: 0.30, labelCoords: [54.5, -2.5], labelBg: 'rgba(180,83,9,0.88)', labelColor: '#FFF', polygon: [[-6.0,50.0],[1.8,51.2],[-1.5,58.6],[-7.5,57.5],[-10.0,51.5],[-6.0,50.0]] },
+                        { name: 'Ấn Độ thuộc Anh', color: '#D97706', fillOpacity: 0.22, labelCoords: [22.0, 79.0], labelBg: 'rgba(180,83,9,0.84)', labelColor: '#FFF', polygon: [[61.5,25.0],[71.0,35.5],[80.0,31.0],[97.0,28.0],[98.5,16.0],[88.0,21.5],[80.2,13.0],[77.5,8.1],[72.8,19.0],[67.0,24.8],[61.5,25.0]] },
+                        { name: 'Đế quốc Đức & Áo-Hung', color: '#4B5563', fillOpacity: 0.30, labelCoords: [50.0, 15.0], labelBg: 'rgba(55,65,81,0.88)', labelColor: '#F9FAFB', polygon: [[6.0,51.5],[10.0,54.8],[21.0,55.2],[25.5,48.0],[22.0,44.5],[13.5,45.5],[9.5,47.5],[6.0,51.5]] },
+                        { name: 'Đế quốc Nga → Nga Xô viết (1917)', color: '#991B1B', fillOpacity: 0.22, labelCoords: [60.0, 66.0], labelBg: 'rgba(153,27,27,0.86)', labelColor: '#FEF3C7', polygon: [[27.0,60.0],[32.0,69.5],[60.0,70.0],[105.0,73.0],[142.0,66.0],[160.0,60.0],[140.0,54.0],[135.0,44.0],[130.5,42.5],[120.0,50.0],[100.0,51.0],[87.0,49.0],[79.0,42.5],[68.0,38.0],[54.0,39.0],[45.0,41.0],[38.0,44.5],[31.0,46.5],[24.0,51.0],[27.0,60.0]] },
+                        { name: 'Hoa Kỳ', color: '#0D9488', fillOpacity: 0.20, labelCoords: [39.0, -96.0], labelBg: 'rgba(13,148,136,0.84)', labelColor: '#FFF', polygon: [[-124.5,48.5],[-95.0,49.0],[-67.0,45.0],[-75.5,35.0],[-81.0,25.2],[-97.5,26.0],[-117.2,32.5],[-124.5,48.5]] }
+                    ]
+                },
+                '1921-1930': {
+                    eraClass: 'map-era-2',
+                    shortLabel: '1921–1930',
+                    bounds: [[10, 0], [64, 134]],
+                    regions: [
+                        { name: 'Liên bang Xô viết (Thành lập 1922)', color: '#B91C1C', fillOpacity: 0.30, labelCoords: [60.5, 68.0], labelBg: 'rgba(185,28,28,0.90)', labelColor: '#FEF08A', polygon: [[27.0,60.0],[32.0,69.5],[60.0,70.0],[105.0,73.0],[142.0,66.0],[160.0,60.0],[140.0,54.0],[135.0,44.0],[130.5,42.5],[120.0,50.0],[100.0,51.0],[87.0,49.0],[79.0,42.5],[68.0,38.0],[54.0,39.0],[45.0,41.0],[38.0,44.5],[31.0,46.5],[24.0,51.0],[27.0,60.0]] },
+                        { name: 'Cộng hòa Weimar (Đức)', color: '#64748B', fillOpacity: 0.28, labelCoords: [51.3, 10.5], labelBg: 'rgba(71,85,105,0.88)', labelColor: '#FFF', polygon: [[6.0,51.0],[9.5,54.8],[14.5,54.0],[17.5,51.0],[13.5,48.5],[7.8,47.6],[6.0,51.0]] },
+                        { name: 'Trung Hoa — Căn cứ Quảng Châu', color: '#0F766E', fillOpacity: 0.20, labelCoords: [30.0, 110.0], labelBg: 'rgba(15,118,110,0.88)', labelColor: '#FFF', polygon: [[75.0,39.0],[88.0,48.0],[118.0,48.0],[132.0,46.0],[124.0,39.0],[121.8,31.2],[119.5,25.0],[113.5,22.2],[108.0,21.5],[99.0,22.0],[97.5,28.0],[80.0,31.0],[75.0,39.0]] },
+                        { name: 'Liên bang Đông Dương (Thuộc địa Pháp)', color: '#2563EB', fillOpacity: 0.30, labelCoords: [14.8, 108.0], labelBg: 'rgba(37,99,235,0.86)', labelColor: '#FFF', polygon: [[102.1,22.8],[105.5,23.3],[108.0,21.5],[109.4,13.0],[106.8,10.2],[104.8,8.6],[102.6,11.8],[103.5,14.5],[100.3,20.5],[102.1,22.8]] },
+                        { name: 'Xiêm (Thái Lan)', color: '#CA8A04', fillOpacity: 0.30, labelCoords: [15.2, 100.5], labelBg: 'rgba(161,98,7,0.88)', labelColor: '#FFF', polygon: [[97.5,19.5],[101.2,19.5],[105.5,15.0],[102.5,12.2],[100.0,13.5],[99.8,6.5],[98.2,10.0],[98.5,15.0],[97.5,19.5]] }
+                    ]
+                },
+                '1930-1941': {
+                    eraClass: 'map-era-3',
+                    shortLabel: '1930–1941',
+                    bounds: [[12, 8], [64, 142]],
+                    regions: [
+                        { name: 'Liên Xô (USSR)', color: '#B91C1C', fillOpacity: 0.26, labelCoords: [60.5, 68.0], labelBg: 'rgba(185,28,28,0.90)', labelColor: '#FEF08A', polygon: [[27.0,60.0],[32.0,69.5],[60.0,70.0],[105.0,73.0],[142.0,66.0],[160.0,60.0],[140.0,54.0],[135.0,44.0],[130.5,42.5],[120.0,50.0],[100.0,51.0],[87.0,49.0],[79.0,42.5],[68.0,38.0],[54.0,39.0],[45.0,41.0],[38.0,44.5],[31.0,46.5],[24.0,51.0],[27.0,60.0]] },
+                        { name: 'Đức Quốc xã & Phe Trục', color: '#1F2937', fillOpacity: 0.36, labelCoords: [49.5, 12.0], labelBg: 'rgba(17,24,39,0.90)', labelColor: '#FCA5A5', polygon: [[-4.5,48.2],[2.5,51.0],[10.0,55.0],[23.0,54.0],[24.0,46.0],[18.5,40.0],[12.5,37.5],[7.5,43.8],[-1.5,43.4],[-4.5,48.2]] },
+                        { name: 'Đế quốc Nhật Bản (Bành trướng)', color: '#EA580C', fillOpacity: 0.32, labelCoords: [39.5, 128.5], labelBg: 'rgba(194,65,12,0.90)', labelColor: '#FFF', polygon: [[118.0,48.0],[133.0,47.0],[144.0,43.5],[140.0,35.0],[130.0,31.5],[121.8,31.2],[119.0,25.5],[114.5,22.5],[113.5,30.0],[115.0,39.0],[118.0,48.0]] },
+                        { name: 'Trung Quốc kháng chiến', color: '#0F766E', fillOpacity: 0.22, labelCoords: [32.5, 101.0], labelBg: 'rgba(15,118,110,0.88)', labelColor: '#FFF', polygon: [[85.0,43.0],[112.0,41.0],[113.5,30.0],[112.0,23.0],[102.0,22.0],[97.5,28.0],[85.0,32.0],[85.0,43.0]] },
+                        { name: 'Đông Dương dưới ách Pháp – Nhật', color: '#7C3AED', fillOpacity: 0.32, labelCoords: [14.5, 107.8], labelBg: 'rgba(109,40,217,0.88)', labelColor: '#FFF', polygon: [[102.1,22.8],[105.5,23.3],[108.0,21.5],[109.4,13.0],[106.8,10.2],[104.8,8.6],[102.6,11.8],[103.5,14.5],[100.3,20.5],[102.1,22.8]] }
+                    ]
+                }
+            };
+
+            /**
+             * Tuyến đường thực tế chi tiết cho 9 đoạn chuyển tiếp (key = ID chặng đích từ 2 đến 10)
+             * Mỗi đoạn gồm tọa độ thực tế (đường biển / đường sắt xuyên Siberia / đường bộ) & phương tiện
+             */
+            const SEGMENT_ROUTES = {
+                2: {
+                    mode: 'sea',
+                    emoji: '🚢',
+                    travelZoom: 4,
+                    label: 'Hải trình qua Singapore, Colombo, Djibouti & Kênh đào Suez',
+                    coords: [
+                        [10.7683, 106.7068], [8.0, 105.5], [1.26, 103.82], [5.8, 98.0],
+                        [6.9271, 79.8612], [11.5, 58.0], [11.588, 43.145], [21.5, 38.2],
+                        [29.97, 32.55], [31.26, 32.30], [36.8, 16.0], [43.2965, 5.3698]
+                    ]
+                },
+                3: {
+                    mode: 'sea',
+                    emoji: '🚢',
+                    travelZoom: 3,
+                    label: 'Vượt eo biển Gibraltar & Đại Tây Dương sang Hoa Kỳ',
+                    coords: [
+                        [43.2965, 5.3698], [39.0, 1.0], [36.0, -5.5], [37.5, -22.0],
+                        [39.5, -42.0], [40.2, -60.0], [40.7128, -74.0060], [42.3601, -71.0589]
+                    ]
+                },
+                4: {
+                    mode: 'sea',
+                    emoji: '🚢',
+                    travelZoom: 3,
+                    label: 'Vượt Bắc Đại Tây Dương từ Hoa Kỳ sang Vương quốc Anh',
+                    coords: [
+                        [42.3601, -71.0589], [44.5, -55.0], [47.5, -36.0],
+                        [49.8, -18.0], [50.4, -5.5], [51.5074, -0.1278]
+                    ]
+                },
+                5: {
+                    mode: 'sea',
+                    emoji: '🚢',
+                    travelZoom: 6,
+                    label: 'Vượt eo biển Manche từ London trở lại Paris',
+                    coords: [
+                        [51.5074, -0.1278], [51.12, 1.31], [50.95, 1.85],
+                        [49.89, 2.30], [48.8566, 2.3522]
+                    ]
+                },
+                6: {
+                    mode: 'rail',
+                    emoji: '🚂',
+                    travelZoom: 4,
+                    label: 'Tuyến đường sắt Paris → Berlin → Petrograd → Moskva',
+                    coords: [
+                        [48.8566, 2.3522], [50.85, 6.96], [52.52, 13.405],
+                        [54.7, 20.5], [59.93, 30.33], [57.8, 34.0], [55.7558, 37.6173]
+                    ]
+                },
+                7: {
+                    mode: 'rail',
+                    emoji: '🚂',
+                    travelZoom: 4,
+                    label: 'Tuyến đường sắt xuyên Siberia → Vladivostok → Quảng Châu',
+                    coords: [
+                        [55.7558, 37.6173], [56.83, 60.60], [55.00, 82.93],
+                        [52.28, 104.28], [43.1155, 131.8855], [34.5, 125.0],
+                        [28.0, 122.0], [22.2, 114.5], [23.1291, 113.2644]
+                    ]
+                },
+                8: {
+                    mode: 'sea',
+                    emoji: '🚢',
+                    travelZoom: 5,
+                    label: 'Tuyến đường biển & đường bộ từ Quảng Châu sang Đông Bắc Xiêm',
+                    coords: [
+                        [23.1291, 113.2644], [20.5, 112.0], [15.5, 109.8],
+                        [9.5, 106.5], [10.0, 101.8], [13.75, 100.50], [17.4138, 102.7872]
+                    ]
+                },
+                9: {
+                    mode: 'sea',
+                    emoji: '🚢',
+                    travelZoom: 5,
+                    label: 'Từ Xiêm (Thái Lan) vượt biển tới Hương Cảng (Hồng Kông)',
+                    coords: [
+                        [17.4138, 102.7872], [13.75, 100.50], [10.2, 103.5],
+                        [12.0, 109.5], [17.5, 112.5], [22.3193, 114.1694]
+                    ]
+                },
+                10: {
+                    mode: 'rail',
+                    emoji: '🚂',
+                    travelZoom: 4,
+                    label: 'Hương Cảng → Thượng Hải → Moskva (1934–38) → Quế Lâm → Cột mốc 108, Pác Bó',
+                    coords: [
+                        [22.3193, 114.1694], [31.23, 121.47], [43.11, 131.88],
+                        [54.5, 92.0], [55.7558, 37.6173], [43.82, 87.61],
+                        [36.58, 109.48], [25.27, 110.29], [25.03, 102.83],
+                        [23.13, 106.41], [22.9818, 106.0522]
+                    ]
+                }
+            };
+
+            /**
+             * Dữ liệu 10 chặng lịch sử (cô đọng, chuẩn giáo trình, công việc dạng gạch đầu dòng dễ đọc)
+             */
+            const JOURNEY_STOPS = [
+                {
+                    id: 1,
+                    shortName: 'Sài Gòn',
+                    yearLabel: '05/06/1911',
+                    name: 'Bến Nhà Rồng – Sài Gòn',
+                    date: '05/06/1911',
+                    alias: 'Văn Ba',
+                    phase: '1911-1920',
+                    coords: [10.7683, 106.7068],
+                    zoom: 6,
+                    context: 'Đầu thế kỷ XX, Việt Nam chìm dưới ách cai trị thực dân Pháp. Các phong trào yêu nước theo khuynh hướng phong kiến và dân chủ tư sản đều lâm vào khủng hoảng, bế tắc sâu sắc về đường lối cứu nước.',
+                    work: [
+                        'Lấy tên Văn Ba, xin làm phụ bếp trên tàu buôn Amiral Latouche-Tréville của Pháp.',
+                        'Rời Bến Nhà Rồng với hai bàn tay trắng, bắt đầu hành trình 30 năm vượt đại dương tìm đường cứu nước.'
+                    ],
+                    ideology: 'Thể hiện tư duy độc lập, tự chủ và dám đổi mới: không đi sang phương Đông theo lối cũ mà đi thẳng sang phương Tây — trung tâm chủ nghĩa đế quốc — để tự mắt tìm hiểu bản chất rồi trở về giúp đồng bào.',
+                    quote: '“Tôi muốn đi ra ngoài, xem nước Pháp và các nước khác. Sau khi xem xét họ làm như thế nào, tôi sẽ trở về giúp đồng bào chúng ta.”'
+                },
+                {
+                    id: 2,
+                    shortName: 'Marseille',
+                    yearLabel: '1911–1912',
+                    name: 'Marseille & các thuộc địa Á – Phi',
+                    date: '07/1911 – 1912',
+                    alias: 'Văn Ba',
+                    phase: '1911-1920',
+                    coords: [43.2965, 5.3698],
+                    zoom: 6,
+                    context: 'Sau hành trình 1 tháng qua Singapore, Colombo, Djibouti và kênh đào Suez, tàu cập cảng Marseille — thành phố cảng phồn hoa nhưng cũng đầy rẫy người lao động Pháp nghèo khổ.',
+                    work: [
+                        'Làm phụ bếp, công nhân tàu biển, làm vườn tại Marseille và Le Havre.',
+                        'Theo tàu đi qua nhiều hải cảng thuộc địa Pháp ở Bắc Phi, Tây Phi.',
+                        'Gửi thư tới Tổng thống Pháp xin vào học Trường Thuộc địa nhưng bị từ chối.'
+                    ],
+                    ideology: 'Nhận ra sự thật lớn lao: ngay tại nước Pháp "văn minh" cũng có người nghèo khổ bị bóc lột. Bắt đầu phân biệt rõ nhân dân lao động Pháp với bọn thực dân xâm lược, thấu hiểu nỗi đau chung của các dân tộc thuộc địa.',
+                    quote: '“Ở Pháp cũng có người nghèo như bên ta! Vậy thì tại sao người Pháp không khai hóa đồng bào của họ trước khi đi khai hóa chúng ta?”'
+                },
+                {
+                    id: 3,
+                    shortName: 'Hoa Kỳ',
+                    yearLabel: '1912–1913',
+                    name: 'Hoa Kỳ (New York & Boston)',
+                    date: '1912–1913',
+                    alias: 'Văn Ba',
+                    phase: '1911-1920',
+                    coords: [42.3601, -71.0589],
+                    zoom: 5,
+                    context: 'Hoa Kỳ vươn lên thành cường quốc công nghiệp hàng đầu với mô hình cộng hòa tư sản, nhưng nạn phân biệt chủng tộc với người da đen và bất bình đẳng giai cấp diễn ra hết sức gay gắt.',
+                    work: [
+                        'Làm bánh, phụ bếp tại khách sạn Omni Parker House (Boston) và làm vườn, khuân vác ở Brooklyn (New York).',
+                        'Nghiên cứu Tuyên ngôn Độc lập Mỹ (1776) và tham dự các buổi diễn thuyết của phong trào người da đen tại khu Harlem.'
+                    ],
+                    ideology: 'Nhận rõ tính chất không triệt để của cách mạng tư sản Mỹ: tuy mang danh cộng hòa dân chủ nhưng vẫn tước đoạt công nông và chà đạp các dân tộc da màu, từ đó loại trừ con đường cách mạng tư sản cho Việt Nam.',
+                    quote: '“Ánh sáng trên đầu tượng Thần Tự do tỏa rộng khắp trời xanh, còn dưới chân tượng thì người da đen đang bị chà đạp.”'
+                },
+                {
+                    id: 4,
+                    shortName: 'London',
+                    yearLabel: '1913–1917',
+                    name: 'Vương quốc Anh (London)',
+                    date: '1913–1917',
+                    alias: 'Nguyễn Tất Thành',
+                    phase: '1911-1920',
+                    coords: [51.5074, -0.1278],
+                    zoom: 6,
+                    context: 'Chiến tranh thế giới thứ nhất (1914–1918) bùng nổ ác liệt. London là trung tâm Đế quốc Anh với giai cấp công nhân công nghiệp đông đảo và phong trào công đoàn sôi nổi.',
+                    work: [
+                        'Làm nghề cào tuyết, đốt lò, rửa bát và phụ bếp tại khách sạn danh tiếng Carlton.',
+                        'Kiên trì tự học tiếng Anh; tham gia Hội Lao động hải ngoại và ủng hộ phong trào đấu tranh của công nhân Anh, nhân dân Ireland.'
+                    ],
+                    ideology: 'Tôi luyện lập trường, kỷ luật của giai cấp công nhân; thấy rõ bản chất phi nghĩa của chiến tranh đế quốc và đúc kết chân lý giai cấp: trên đời chỉ có hai giống người — bóc lột và bị bóc lột.',
+                    quote: '“Dù màu da có khác nhau, trên đời này chỉ có hai giống người: giống người bóc lột và giống người bị bóc lột.”'
+                },
+                {
+                    id: 5,
+                    shortName: 'Paris',
+                    yearLabel: '1917–1923',
+                    name: 'Pháp (Paris — Bước ngoặt vĩ đại)',
+                    date: '1917–1923',
+                    alias: 'Nguyễn Ái Quốc',
+                    phase: '1911-1920',
+                    coords: [48.8566, 2.3522],
+                    zoom: 6,
+                    context: 'Cách mạng Tháng Mười Nga (1917) thắng lợi chấn động địa cầu; Hội nghị Vécxây (1919) họp phân chia lại thuộc địa. Cuộc đấu tranh tư tưởng trong Đảng Xã hội Pháp diễn ra quyết liệt.',
+                    work: [
+                        'Làm nghề rửa ảnh, vẽ đồ cổ để mưu sinh và hoạt động cách mạng.',
+                        'Gửi "Bản yêu sách của nhân dân An Nam" tới Hội nghị Vécxây (6/1919); sáng lập báo Le Paria (Người cùng khổ).',
+                        'Đọc Luận cương của V.I. Lênin (7/1920) và tham gia sáng lập Đảng Cộng sản Pháp tại Đại hội Tua (12/1920).'
+                    ],
+                    ideology: 'Bước ngoặt quyết định của lịch sử Việt Nam: chuyển từ chủ nghĩa yêu nước sang chủ nghĩa Mác - Lênin, trở thành người cộng sản Việt Nam đầu tiên và tìm thấy con đường cứu nước đúng đắn — cách mạng vô sản.',
+                    quote: '“Hỡi đồng bào bị đọa đày đau khổ! Đây là cái cần thiết cho chúng ta, đây là con đường giải phóng chúng ta!” (Tháng 7/1920)'
+                },
+                {
+                    id: 6,
+                    shortName: 'Moskva',
+                    yearLabel: '1923–1924',
+                    name: 'Liên Xô (Moskva — Quốc tế Cộng sản)',
+                    date: '06/1923 – 10/1924',
+                    alias: 'Nguyễn Ái Quốc / Chen Vang',
+                    phase: '1921-1930',
+                    coords: [55.7558, 37.6173],
+                    zoom: 5,
+                    context: 'Liên bang Xô viết vừa thành lập (1922) — nhà nước XHCN đầu tiên trên thế giới. Moskva là trung tâm của Quốc tế Cộng sản và phong trào cách mạng phương Đông.',
+                    work: [
+                        'Học tập lý luận tại Trường Đại học Phương Đông.',
+                        'Tham dự Hội nghị Quốc tế Nông dân (1923) và đọc tham luận tại Đại hội V Quốc tế Cộng sản (1924).',
+                        'Viết nhiều bài báo sắc bén trên báo Pravda, tạp chí Inprekorr tố cáo tội ác chủ nghĩa thực dân.'
+                    ],
+                    ideology: 'Tiếp thu có hệ thống chủ nghĩa Mác - Lênin; khẳng định luận điểm sáng tạo: cách mạng giải phóng dân tộc ở thuộc địa có tính chủ động và có thể giành thắng lợi trước cách mạng vô sản ở chính quốc.',
+                    quote: '“Chủ nghĩa tư bản là một con đỉa có một cái vòi bám vào giai cấp vô sản ở chính quốc và một cái vòi khác bám vào giai cấp vô sản ở các thuộc địa.”'
+                },
+                {
+                    id: 7,
+                    shortName: 'Quảng Châu',
+                    yearLabel: '1924–1927',
+                    name: 'Quảng Châu – Trung Quốc',
+                    date: '11/1924 – 04/1927',
+                    alias: 'Lý Thụy',
+                    phase: '1921-1930',
+                    coords: [23.1291, 113.2644],
+                    zoom: 6,
+                    context: 'Quảng Châu là trung tâm phong trào cách mạng sôi động ở Trung Quốc, gần Việt Nam và là nơi quy tụ nhiều thanh niên Việt Nam yêu nước sang tìm đường đấu tranh.',
+                    work: [
+                        'Sáng lập Hội Việt Nam Cách mạng Thanh niên (6/1925) và xuất bản tuần báo Thanh Niên.',
+                        'Trực tiếp mở các lớp huấn luyện chính trị, đào tạo đội ngũ cán bộ cốt cán đưa về nước hoạt động.',
+                        'Xuất bản tác phẩm kinh điển "Đường Kách mệnh" (1927).'
+                    ],
+                    ideology: 'Hình thành cơ bản hệ thống tư tưởng Hồ Chí Minh về cách mạng Việt Nam: xác định rõ mục tiêu, lực lượng toàn dân (công – nông là gốc) và vai trò quyết định của Đảng cách mạng tiên phong.',
+                    quote: '“Cách mệnh trước hết phải có cái gì? Trước hết phải có đảng cách mệnh...” (Đường Kách mệnh, 1927)'
+                },
+                {
+                    id: 8,
+                    shortName: 'Xiêm (Thái Lan)',
+                    yearLabel: '1928–1929',
+                    name: 'Xiêm – Thái Lan (Cơ sở Việt kiều)',
+                    date: '07/1928 – 11/1929',
+                    alias: 'Thầu Chín',
+                    phase: '1921-1930',
+                    coords: [17.4138, 102.7872],
+                    zoom: 6,
+                    context: 'Vùng Đông Bắc Xiêm (Udon Thani, Nakhon Phanom...) tập trung đông đảo bà con Việt kiều yêu nước sinh sống, có vị trí thuận lợi sát biên giới Lào – Việt Nam.',
+                    work: [
+                        'Lấy bí danh Thầu Chín, đi bộ hàng trăm cây số khảo sát thực tế, cùng ăn, cùng ở, cùng lao động với bà con.',
+                        'Xây dựng Hội Thân ái, mở trường dạy chữ quốc ngữ cho con em Việt kiều và xuất bản báo Thân Ái.'
+                    ],
+                    ideology: 'Thể hiện sâu sắc phong cách quần chúng, gần dân, trọng dân và tư tưởng đại đoàn kết dân tộc rộng rãi: quy tụ sức mạnh đồng bào yêu nước ở cả trong và ngoài nước hướng về Tổ quốc.',
+                    quote: 'Đồng bào Việt kiều tại Xiêm luôn trìu mến gọi Người là “Thầu Chín” — người lãnh tụ giản dị, hòa mình trọn vẹn vào đời sống nhân dân.'
+                },
+                {
+                    id: 9,
+                    shortName: 'Hương Cảng',
+                    yearLabel: '02/1930',
+                    name: 'Hương Cảng – Hồng Kông (Thành lập Đảng)',
+                    date: '03/02/1930',
+                    alias: 'Nguyễn Ái Quốc / Tống Văn Sơ',
+                    phase: '1921-1930',
+                    coords: [22.3193, 114.1694],
+                    zoom: 6,
+                    context: 'Cuối năm 1929, tại Việt Nam xuất hiện 3 tổ chức cộng sản hoạt động riêng rẽ, đặt ra yêu cầu lịch sử cấp bách phải thống nhất thành một chính đảng duy nhất.',
+                    work: [
+                        'Chủ trì Hội nghị hợp nhất tại Cửu Long (03/02/1930), sáng lập Đảng Cộng sản Việt Nam.',
+                        'Trực tiếp soạn thảo Chánh cương vắn tắt, Sách lược vắn tắt (Cương lĩnh chính trị đầu tiên của Đảng).',
+                        'Kiên cường vượt qua vụ án bị thực dân Anh bắt giam tại Hồng Kông (1931–1933).'
+                    ],
+                    ideology: 'Đỉnh cao tư duy độc lập, tự chủ, sáng tạo trong vận dụng chủ nghĩa Mác - Lênin: đặt nhiệm vụ giải phóng dân tộc lên hàng đầu, chấm dứt hoàn toàn cuộc khủng hoảng đường lối cứu nước kéo dài nhiều thập kỷ.',
+                    quote: 'Cương lĩnh chính trị đầu tiên (2/1930): “Làm tư sản dân quyền cách mạng và thổ địa cách mạng để đi tới xã hội cộng sản.”'
+                },
+                {
+                    id: 10,
+                    shortName: 'Pác Bó',
+                    yearLabel: '28/01/1941',
+                    name: 'Pác Bó, Cao Bằng – Trở về Tổ quốc',
+                    date: '28/01/1941',
+                    alias: 'Già Thu',
+                    phase: '1930-1941',
+                    coords: [22.9818, 106.0522],
+                    zoom: 7,
+                    context: 'Thế chiến II bùng nổ (1939); phát xít Nhật tiến vào Đông Dương (9/1940), đẩy nhân dân ta vào cảnh "một cổ hai tròng" Pháp – Nhật, tạo ra thời cơ lịch sử mới cho cách mạng.',
+                    work: [
+                        'Vượt cột mốc 108 biên giới Việt – Trung (28/01/1941), trực tiếp về nước sau đúng 30 năm bôn ba.',
+                        'Chủ trì Hội nghị Trung ương 8 (5/1941) tại hang Pác Bó, sáng lập Mặt trận Việt Minh.',
+                        'Ra báo Việt Nam Độc lập và xây dựng căn cứ địa cách mạng Cao – Bắc – Lạng.'
+                    ],
+                    ideology: 'Hoàn chỉnh sự chuyển hướng chỉ đạo chiến lược: đặt nhiệm vụ giải phóng dân tộc lên trên hết và trước hết, quy tụ sức mạnh toàn dân tộc, mở đường trực tiếp tới thắng lợi của Cách mạng Tháng Tám 1945.',
+                    quote: '“Trong lúc này quyền lợi của bộ phận, của giai cấp phải đặt dưới sự sinh tử, tồn vong của quốc gia, của dân tộc.” (Hội nghị TW 8, 5/1941)'
+                }
+            ];
+
+            /**
+             * Cục diện thế giới tương ứng với từng chặng (1–10)
+             */
+            const WORLD_SITUATIONS = {
+                1: 'Chủ nghĩa tư bản chuyển sang giai đoạn đế quốc chủ nghĩa; hệ thống thuộc địa bao trùm hầu khắp châu Á – Phi. Thực dân Pháp hoàn tất bình định và khai thác thuộc địa lần thứ nhất tại Đông Dương.',
+                2: 'Châu Âu căng thẳng trước thềm Thế chiến I giữa hai khối Liên minh (Đức – Áo-Hung) và Hiệp ước (Anh – Pháp – Nga); đế quốc Pháp mở rộng thuộc địa rộng lớn ở Bắc Phi và Tây Phi.',
+                3: 'Hoa Kỳ vươn lên trở thành cường quốc công nghiệp hàng đầu thế giới với nền dân chủ tư sản, nhưng mâu thuẫn giai cấp và nạn phân biệt chủng tộc diễn ra sâu sắc.',
+                4: 'Chiến tranh thế giới thứ nhất (1914–1918) bùng nổ tàn khốc. Anh là "đế quốc mặt trời không bao giờ lặn" với phong trào công nhân và công đoàn phát triển mạnh mẽ.',
+                5: 'Cách mạng Tháng Mười Nga (1917) thắng lợi mở ra thời đại mới; Quốc tế Cộng sản (Quốc tế III) ra đời năm 1919; Hội nghị Vécxây phân chia lại trật tự thế giới sau Thế chiến I.',
+                6: 'Liên bang Cộng hòa XHCN Xô viết thành lập (1922) — thành trì đầu tiên của chủ nghĩa xã hội thế giới; Moskva trở thành trung tâm lãnh đạo phong trào cộng sản và giải phóng dân tộc.',
+                7: 'Tại Trung Quốc, cao trào Quốc – Cộng hợp tác phát triển mạnh ở Quảng Châu; phong trào giải phóng dân tộc ở châu Á dâng cao dưới ảnh hưởng của Cách mạng Tháng Mười Nga.',
+                8: 'Chính quyền Tưởng Giới Thạch khủng bố trắng phong trào cách mạng Trung Quốc (1927); tại Đông Nam Á, Xiêm là quốc gia độc lập hiếm hoi nằm sát biên giới Đông Dương.',
+                9: 'Đại khủng hoảng kinh tế thế giới (1929–1933) bùng nổ, làm trầm trọng mâu thuẫn giữa các dân tộc thuộc địa với chủ nghĩa đế quốc và thúc đẩy làn sóng đấu tranh cách mạng.',
+                10: 'Chiến tranh thế giới thứ hai (1939–1945) lan rộng: phát xít Đức chiếm Pháp (6/1940), phát xít Nhật tiến vào Đông Dương (9/1940), tạo ra thời cơ lịch sử mới cho cách mạng Việt Nam.'
+            };
+
+            /**
+             * BỘ 27 CÂU HỎI TRẮC NGHIỆM (9 chặng chuyển tiếp × 3 trạm dừng/chặng)
+             */
+            const CHECKPOINT_QUIZZES = {
+                2: [
+                    {
+                        question: 'Ngày 05/06/1911, từ Bến Nhà Rồng (Sài Gòn), Nguyễn Tất Thành lấy tên là gì và làm công việc nào trên tàu Amiral Latouche-Tréville?',
+                        options: ['Lấy tên Nguyễn Ái Quốc, làm phiên dịch', 'Lấy tên Văn Ba, làm phụ bếp trên tàu', 'Lấy tên Lý Thụy, làm thủy thủ lái tàu', 'Lấy tên Thầu Chín, làm công nhân đốt lò'],
+                        correctIndex: 1,
+                        explanation: 'Người thanh niên Nguyễn Tất Thành lấy tên Văn Ba, xin làm phụ bếp trên tàu buôn Pháp để vượt đại dương sang phương Tây.'
+                    },
+                    {
+                        question: 'Điểm khác biệt căn bản trong hướng đi tìm đường cứu nước của Nguyễn Tất Thành so với các bậc tiền bối (Phan Bội Châu, Phan Châu Trinh) là gì?',
+                        options: ['Sang Nhật Bản cầu viện theo phong trào Đông Du', 'Đi thẳng sang phương Tây — trung tâm chủ nghĩa đế quốc — để tự mắt tìm hiểu bản chất rồi trở về cứu nước', 'Dựa vào triều đình nhà Nguyễn để cải cách', 'Tập trung khởi nghĩa vũ trang ngay tại Nam Kỳ'],
+                        correctIndex: 1,
+                        explanation: 'Bác quyết định đi sang phương Tây để xem xét thực chất khẩu hiệu "Tự do – Bình đẳng – Bác ái" rồi mới trở về giúp đồng bào.'
+                    },
+                    {
+                        question: 'Trên hải trình từ Sài Gòn tới cảng Marseille (Pháp) năm 1911, con tàu đã đi qua tuyến hàng hải huyết mạch nào?',
+                        options: ['Đi vòng qua mũi Hảo Vọng (Nam Phi)', 'Qua Singapore, Colombo, Djibouti và kênh đào Suez', 'Đi qua kênh đào Panama xuyên Thái Bình Dương', 'Đi theo tuyến đường sắt xuyên Siberia'],
+                        correctIndex: 1,
+                        explanation: 'Tàu đi theo tuyến hàng hải thực tế qua Singapore, Colombo, Djibouti và kênh đào Suez để cập cảng Marseille ngày 06/07/1911.'
+                    }
+                ],
+                3: [
+                    {
+                        question: 'Khi đặt chân lên cảng Marseille (Pháp), Nguyễn Tất Thành đã phát hiện ra sự thật bất ngờ nào?',
+                        options: ['Mọi người dân Pháp đều giàu có và bình đẳng tuyệt đối', 'Thực dân Pháp đang chuẩn bị trao trả độc lập cho Đông Dương', 'Ngay tại nước Pháp "văn minh" cũng có nhiều người lao động nghèo khổ, bị bóc lột như ở thuộc địa', 'Trường Thuộc địa Pháp mở cửa chào đón mọi thanh niên Việt Nam'],
+                        correctIndex: 2,
+                        explanation: 'Chứng kiến cảnh nghèo khổ ngay tại Marseille, Bác nhận rõ thực chất khẩu hiệu "khai hóa văn minh" của thực dân Pháp.'
+                    },
+                    {
+                        question: 'Qua thực tiễn ở Pháp và nhiều thuộc địa châu Phi (1911–1912), bước chuyển biến nhận thức quan trọng của Người là gì?',
+                        options: ['Phân biệt rõ nhân dân lao động Pháp với bọn thực dân xâm lược, thấu hiểu nỗi khổ chung của các dân tộc thuộc địa', 'Tin tưởng hoàn toàn vào chính sách cải lương của chính phủ Pháp', 'Quyết định định cư lâu dài tại cảng Le Havre', 'Chủ trương liên minh với giới chủ tàu Pháp'],
+                        correctIndex: 0,
+                        explanation: 'Thực tiễn ở Pháp và châu Phi giúp Bác nhận rõ bạn – thù: nhân dân lao động Pháp là bạn, còn chủ nghĩa thực dân là kẻ thù chung.'
+                    },
+                    {
+                        question: 'Để tiếp tục hành trình khảo sát các nước tư bản lớn sau nước Pháp, Nguyễn Tất Thành đã vượt Đại Tây Dương tới quốc gia nào (1912–1913)?',
+                        options: ['Liên bang Xô viết', 'Hoa Kỳ (New York, Boston)', 'Đế quốc Đức', 'Nhật Bản'],
+                        correctIndex: 1,
+                        explanation: 'Năm 1912–1913, Bác sang Hoa Kỳ (New York, Boston) để trực tiếp tìm hiểu mô hình cộng hòa tư sản hiện đại nhất lúc bấy giờ.'
+                    }
+                ],
+                4: [
+                    {
+                        question: 'Trong thời gian sống tại Boston (Hoa Kỳ, 1912–1913), Nguyễn Tất Thành đã làm công việc mưu sinh nào tại khách sạn Omni Parker House?',
+                        options: ['Thợ rửa ảnh và vẽ đồ cổ', 'Làm bánh, phụ bếp', 'Phiên dịch tiếng Anh cho lãnh sự quán', 'Giáo viên dạy tiếng Pháp'],
+                        correctIndex: 1,
+                        explanation: 'Tại Boston, Bác làm bánh, phụ bếp ở khách sạn Omni Parker House và khuân vác, làm vườn ở Brooklyn (New York).'
+                    },
+                    {
+                        question: 'Khi quan sát xã hội Mỹ tại New York và Boston, Bác nhận ra mâu thuẫn gay gắt nào ẩn sau ánh sáng tượng Thần Tự do?',
+                        options: ['Nước Mỹ chưa có nền công nghiệp phát triển', 'Nạn phân biệt chủng tộc tàn bạo với người da đen và bất bình đẳng giai cấp sâu sắc', 'Nước Mỹ vẫn là thuộc địa của Đế quốc Anh', 'Không có phong trào đấu tranh của người lao động'],
+                        correctIndex: 1,
+                        explanation: 'Bác ghi nhận: "Ánh sáng trên đầu tượng Thần Tự do tỏa rộng khắp trời xanh, còn dưới chân tượng thì người da đen đang bị chà đạp."'
+                    },
+                    {
+                        question: 'Từ việc tìm hiểu Tuyên ngôn Độc lập Mỹ (1776) và xã hội Mỹ, Nguyễn Tất Thành rút ra kết luận tư tưởng nào?',
+                        options: ['Cách mạng Việt Nam nên đi theo mô hình cộng hòa tư sản Mỹ', 'Cách mạng tư sản Mỹ không triệt để, không thể giải phóng hoàn toàn công nông và các dân tộc bị áp bức', 'Nên kêu gọi Mỹ can thiệp quân sự vào Đông Dương', 'Tuyên ngôn Độc lập Mỹ hoàn toàn không có giá trị lịch sử'],
+                        correctIndex: 1,
+                        explanation: 'Bác loại trừ con đường cách mạng tư sản cho Việt Nam vì đó là cuộc cách mạng "không đến nơi", thực chất vẫn áp bức công nông và người da màu.'
+                    }
+                ],
+                5: [
+                    {
+                        question: 'Tại London (Anh, 1913–1917), để kiếm sống và rèn luyện bản thân, Nguyễn Tất Thành đã làm những công việc nào?',
+                        options: ['Cào tuyết, đốt lò, rửa bát, phụ bếp tại khách sạn Carlton và kiên trì tự học tiếng Anh', 'Làm biên tập viên tại nghị viện Anh', 'Mở cửa hàng buôn bán tại cảng London', 'Làm giáo sư tại đại học London'],
+                        correctIndex: 0,
+                        explanation: 'Bác làm nhiều nghề lao động nặng nhọc như cào tuyết, đốt lò, phụ bếp tại khách sạn Carlton và miệt mài tự học tiếng Anh.'
+                    },
+                    {
+                        question: 'Sự kiện thế giới lớn nào bùng nổ ngay trong thời gian Nguyễn Tất Thành sống và làm việc tại Vương quốc Anh (1913–1917)?',
+                        options: ['Chiến tranh thế giới thứ hai (1939–1945)', 'Chiến tranh thế giới thứ nhất (1914–1918)', 'Cách mạng Tân Hợi (1911)', 'Khủng hoảng kinh tế thế giới (1929–1933)'],
+                        correctIndex: 1,
+                        explanation: 'Thế chiến I (1914–1918) đẩy hàng triệu công nhân và lính thuộc địa vào lò lửa chiến tranh phi nghĩa, phơi bày bản chất tàn bạo của chủ nghĩa đế quốc.'
+                    },
+                    {
+                        question: 'Thực tiễn hòa mình vào giai cấp công nhân tại London giúp Nguyễn Tất Thành đúc kết chân lý giai cấp sâu sắc nào?',
+                        options: ['Chỉ cần dựa vào tầng lớp trí thức tư sản để cứu nước', 'Trên đời này chỉ có hai giống người: giống người bóc lột và giống người bị bóc lột', 'Mâu thuẫn chủ yếu của thế giới là mâu thuẫn tôn giáo', 'Giai cấp công nhân không liên hệ với phong trào giải phóng dân tộc'],
+                        correctIndex: 1,
+                        explanation: 'Giai đoạn ở Anh đã tôi luyện cho Người lập trường giai cấp công nhân, khẳng định bản chất giai cấp vượt qua ranh giới màu da.'
+                    }
+                ],
+                6: [
+                    {
+                        question: 'Tháng 6/1919, thay mặt Hội những người Việt Nam yêu nước tại Pháp, Nguyễn Ái Quốc đã gửi văn kiện nào tới Hội nghị Vécxây?',
+                        options: ['Đường Kách mệnh', 'Bản yêu sách của nhân dân An Nam (gồm 8 điểm)', 'Chánh cương vắn tắt của Đảng', 'Tuyên ngôn Độc lập'],
+                        correctIndex: 1,
+                        explanation: 'Cái tên Nguyễn Ái Quốc lần đầu xuất hiện cùng "Bản yêu sách của nhân dân An Nam" đòi các quyền tự do, dân chủ tối thiểu cho dân tộc.'
+                    },
+                    {
+                        question: 'Sự kiện nào vào tháng 7/1920 tại Paris đánh dấu bước ngoặt quyết định giúp Nguyễn Ái Quốc tìm thấy con đường cứu nước đúng đắn?',
+                        options: ['Sáng lập báo Le Paria (Người cùng khổ)', 'Đọc "Sơ thảo lần thứ nhất những luận cương về vấn đề dân tộc và vấn đề thuộc địa" của V.I. Lênin', 'Viết tác phẩm Bản án chế độ thực dân Pháp', 'Tham gia biểu tình ở cảng Marseille'],
+                        correctIndex: 1,
+                        explanation: 'Đọc Luận cương của Lênin trên báo L\'Humanité, Người vui mừng đến phát khóc: "Đây là cái cần thiết cho chúng ta, đây là con đường giải phóng chúng ta!"'
+                    },
+                    {
+                        question: 'Tháng 12/1920 tại Đại hội Tua (Pháp), Nguyễn Ái Quốc đã có quyết định lịch sử trọng đại nào?',
+                        options: ['Bỏ phiếu tán thành Quốc tế III (Quốc tế Cộng sản) và tham gia sáng lập Đảng Cộng sản Pháp', 'Gia nhập Đảng Xã hội Pháp theo khuynh hướng cải lương', 'Trở về Việt Nam ngay lập tức để khởi nghĩa', 'Chuyển sang Hoa Kỳ tiếp tục làm báo'],
+                        correctIndex: 0,
+                        explanation: 'Tại Đại hội Tua (12/1920), Nguyễn Ái Quốc tán thành Quốc tế III và trở thành người cộng sản đầu tiên của dân tộc Việt Nam.'
+                    }
+                ],
+                7: [
+                    {
+                        question: 'Trong thời gian hoạt động tại Moskva (Liên Xô, 1923–1924), Nguyễn Ái Quốc đã học tập và tham dự đại hội quốc tế quan trọng nào?',
+                        options: ['Học tại Đại học Phương Đông và dự Đại hội V Quốc tế Cộng sản (1924)', 'Học tại Đại học Sorbonne và dự Hội nghị Vécxây', 'Học tại Trường Quân sự Hoàng Phố', 'Học tại Đại học Oxford và dự Hội nghị Công đoàn'],
+                        correctIndex: 0,
+                        explanation: 'Tại Moskva, Nguyễn Ái Quốc theo học Đại học Phương Đông, dự Hội nghị Quốc tế Nông dân (1923) và Đại hội V Quốc tế Cộng sản (1924).'
+                    },
+                    {
+                        question: 'Để diễn tả mối quan hệ khăng khít giữa cách mạng thuộc địa và cách mạng chính quốc, Nguyễn Ái Quốc dùng hình ảnh nổi tiếng nào?',
+                        options: ['Ngọn hải đăng soi đường', 'Chủ nghĩa tư bản là một con đỉa có hai vòi (bám vào vô sản chính quốc và thuộc địa)', 'Cánh chim báo bão của thời đại', 'Chiếc cầu nối giữa hai đại dương'],
+                        correctIndex: 1,
+                        explanation: 'Hình ảnh "con đỉa hai vòi" khẳng định muốn tiêu diệt chủ nghĩa đế quốc phải đồng thời cắt cả hai vòi ở chính quốc và thuộc địa.'
+                    },
+                    {
+                        question: 'Luận điểm sáng tạo nổi bật của Nguyễn Ái Quốc về cách mạng giải phóng dân tộc ở thuộc địa là gì?',
+                        options: ['Cách mạng thuộc địa phải thụ động chờ chính quốc thắng lợi trước', 'Cách mạng giải phóng dân tộc ở thuộc địa có tính chủ động và có thể giành thắng lợi trước cách mạng vô sản ở chính quốc', 'Chỉ có thể giải phóng bằng đàm phán hòa bình', 'Chỉ có giai cấp tư sản thuộc địa mới lãnh đạo được cách mạng'],
+                        correctIndex: 1,
+                        explanation: 'Đây là đóng góp lý luận đặc sắc của Hồ Chí Minh: phát huy tính chủ động, sáng tạo của cách mạng thuộc địa, không ỷ lại vào chính quốc.'
+                    }
+                ],
+                8: [
+                    {
+                        question: 'Tháng 6/1925 tại Quảng Châu (Trung Quốc), Nguyễn Ái Quốc (bí danh Lý Thụy) đã sáng lập tổ chức tiền thân nào của Đảng?',
+                        options: ['Đông Dương Cộng sản Đảng', 'Hội Việt Nam Cách mạng Thanh niên', 'Mặt trận Việt Minh', 'Hội Liên hiệp thuộc địa'],
+                        correctIndex: 1,
+                        explanation: 'Hội Việt Nam Cách mạng Thanh niên và tuần báo Thanh Niên đã trực tiếp chuẩn bị về chính trị, tư tưởng và tổ chức cho việc thành lập Đảng.'
+                    },
+                    {
+                        question: 'Tác phẩm lý luận kinh điển nào tập hợp các bài giảng huấn luyện cán bộ của Nguyễn Ái Quốc tại Quảng Châu, xuất bản năm 1927?',
+                        options: ['Bản án chế độ thực dân Pháp', 'Đường Kách mệnh', 'Nhật ký trong tù', 'Sửa đổi lối làm việc'],
+                        correctIndex: 1,
+                        explanation: '"Đường Kách mệnh" (1927) là văn kiện lý luận nền tảng trình bày có hệ thống những vấn đề cốt lõi của cách mạng Việt Nam.'
+                    },
+                    {
+                        question: 'Theo tư tưởng trình bày trong "Đường Kách mệnh", điều kiện tiên quyết hàng đầu để cách mạng thắng lợi là gì?',
+                        options: ['Trước hết phải có vũ khí hiện đại từ bên ngoài', 'Trước hết phải có Đảng cách mệnh, có chủ nghĩa Lênin làm cốt để lãnh đạo quần chúng', 'Trước hết phải chờ chiến tranh thế giới', 'Trước hết phải lập chính phủ liên hiệp tư sản'],
+                        correctIndex: 1,
+                        explanation: 'Bác khẳng định: "Cách mệnh trước hết phải có cái gì? Trước hết phải có đảng cách mệnh..."'
+                    }
+                ],
+                9: [
+                    {
+                        question: 'Khi hoạt động xây dựng cơ sở cách mạng trong cộng đồng Việt kiều ở vùng Đông Bắc Xiêm (Thái Lan, 1928–1929), Bác lấy bí danh quen thuộc nào?',
+                        options: ['Văn Ba', 'Lý Thụy', 'Thầu Chín', 'Già Thu'],
+                        correctIndex: 2,
+                        explanation: 'Trong những năm 1928–1929 tại Đông Bắc Thái Lan, bà con Việt kiều luôn trìu mến gọi Người với bí danh "Thầu Chín".'
+                    },
+                    {
+                        question: 'Tại Xiêm (Thái Lan), Bác đã tổ chức hoạt động nào để gắn kết cộng đồng Việt kiều hướng về Tổ quốc?',
+                        options: ['Lập Hội Thân ái, mở lớp dạy chữ quốc ngữ cho con em Việt kiều và xuất bản báo Thân Ái', 'Chủ trì Hội nghị thành lập Đảng Cộng sản Việt Nam', 'Thành lập Mặt trận Việt Minh', 'Mở lớp huấn luyện quân sự tại Bangkok'],
+                        correctIndex: 0,
+                        explanation: 'Tại Xiêm, Bác vận động bà con lập Hội Thân ái, mở trường dạy chữ quốc ngữ, ra báo Thân Ái và vun đắp tình hữu nghị Việt – Thái.'
+                    },
+                    {
+                        question: 'Phong cách công tác của Bác tại Xiêm (đi bộ hàng trăm cây số, cùng ăn, cùng ở, cùng lao động với bà con) thể hiện sâu sắc tư tưởng nào?',
+                        options: ['Tư tưởng trọng hình thức, chỉ đạo từ xa', 'Phong cách quần chúng, gần dân, trọng dân và phát huy sức mạnh đại đoàn kết toàn dân tộc', 'Chủ trương tách rời quần chúng nhân dân', 'Chỉ vận động tầng lớp thương nhân giàu có'],
+                        correctIndex: 1,
+                        explanation: 'Sự giản dị, hòa mình trọn vẹn vào đời sống nhân dân của "Thầu Chín" là biểu hiện sinh động của phong cách quần chúng và đại đoàn kết dân tộc.'
+                    }
+                ],
+                10: [
+                    {
+                        question: 'Ngày 03/02/1930 tại Cửu Long (Hương Cảng – Hồng Kông), Nguyễn Ái Quốc đã chủ trì sự kiện lịch sử trọng đại nào?',
+                        options: ['Hội nghị Trung ương 8 thành lập Mặt trận Việt Minh', 'Hội nghị hợp nhất các tổ chức cộng sản, thành lập Đảng Cộng sản Việt Nam', 'Đại hội V Quốc tế Cộng sản', 'Hội nghị thành lập Hội Việt Nam Cách mạng Thanh niên'],
+                        correctIndex: 1,
+                        explanation: 'Nguyễn Ái Quốc đã hợp nhất các tổ chức cộng sản riêng rẽ thành một chính đảng duy nhất: Đảng Cộng sản Việt Nam (03/02/1930).'
+                    },
+                    {
+                        question: 'Các văn kiện Chánh cương vắn tắt, Sách lược vắn tắt do Nguyễn Ái Quốc soạn thảo tháng 2/1930 hợp thành văn kiện lịch sử nào?',
+                        options: ['Luận cương chính trị tháng 10/1930', 'Cương lĩnh chính trị đầu tiên của Đảng Cộng sản Việt Nam', 'Tuyên ngôn của Hội Liên hiệp thuộc địa', 'Bản yêu sách của nhân dân An Nam'],
+                        correctIndex: 1,
+                        explanation: 'Chánh cương vắn tắt, Sách lược vắn tắt, Chương trình tóm tắt và Điều lệ vắn tắt hợp thành Cương lĩnh chính trị đầu tiên của Đảng.'
+                    },
+                    {
+                        question: 'Điểm cốt lõi thể hiện sự vận dụng sáng tạo chủ nghĩa Mác - Lênin trong Cương lĩnh chính trị đầu tiên (2/1930) là gì?',
+                        options: ['Đặt nhiệm vụ giải phóng dân tộc lên hàng đầu, xây dựng khối đại đoàn kết toàn dân tộc rộng rãi, chấm dứt khủng hoảng đường lối', 'Chỉ tập trung đấu tranh giai cấp, bỏ qua nhiệm vụ chống đế quốc', 'Tạm gác mục tiêu độc lập dân tộc', 'Không đoàn kết với tiểu tư sản và trí thức yêu nước'],
+                        correctIndex: 0,
+                        explanation: 'Cương lĩnh tháng 2/1930 giải quyết hài hòa mối quan hệ dân tộc và giai cấp, đặt giải phóng dân tộc lên hàng đầu và quy tụ rộng rãi mọi lực lượng yêu nước.'
+                    }
+                ]
+            };
+
+            /**
+             * Trạng thái ứng dụng
+             */
+            const CHECKPOINT_FRACTIONS = [0.25, 0.55, 0.82]; // 3 trạm dừng kiểm tra trên mỗi đoạn chuyển chặng
+
+            const state = {
+                filterPhase: 'all',
+                activeEraMap: '1911-1920',
+                activeBaseMap: 'physical',
+                showGeoLayer: true,
+                showRouteLayer: true,
+                isLayerPopoverOpen: false,
+                maxUnlockedStopId: 1,
+                quickUnlockedAll: false,
+                activeStopId: 1,
+                toastTimer: null,
+                // Trạng thái hành trình di chuyển từng đoạn & trạm kiểm tra
+                travel: {
+                    active: false,
+                    targetStopId: null,
+                    currentLegIndex: 0,   // 0: 0->25%, 1: 25->55%, 2: 55->82%, 3: 82->100%
+                    animFrameId: null,
+                    autoContinueTimer: null,
+                    questionPassed: false,
+                    vehicleMarker: null,
+                    traveledLine: null,
+                    guideLine: null,
+                    checkpointMarkers: []
+                }
+            };
+
+            // Biến Leaflet
+            let map = null;
+            let baseLayers = {};
+            let currentBaseLayer = null;
+            let geoPoliticalGroup = null;
+            let routeGroup = null;
+            let travelLayerGroup = null;
+            let markersMap = new Map();
+
+            // DOM Cache
+            const dom = {
+                // Menu mở đầu
+                menuScreen: document.getElementById('menu-screen'),
+                emberCanvas: document.getElementById('ember-canvas'),
+                menuHeroImage: document.getElementById('menuHeroImage'),
+                menuBuiltinBg: document.getElementById('menuBuiltinBg'),
+                startBtn: document.getElementById('start-btn'),
+                startBtnText: document.getElementById('startBtnText'),
+                menuBgFileInput: document.getElementById('menuBgFileInput'),
+                btnUploadMenuBg: document.getElementById('btnUploadMenuBg'),
+                btnResetMenuBg: document.getElementById('btnResetMenuBg'),
+                btnBackToMenu: document.getElementById('btnBackToMenu'),
+                headerProgressBadge: document.getElementById('headerProgressBadge'),
+                // Bản đồ & Thanh công cụ
+                mapEl: document.getElementById('map'),
+                phaseButtons: document.querySelectorAll('.phase-btn'),
+                mobilePhaseSelect: document.getElementById('mobilePhaseSelect'),
+                basemapButtons: document.querySelectorAll('.basemap-btn'),
+                btnOverview: document.getElementById('btnOverview'),
+                btnQuickUnlock: document.getElementById('btnQuickUnlock'),
+                quickUnlockText: document.getElementById('quickUnlockText'),
+                // Popover chọn nền bản đồ
+                layerPopoverContainer: document.getElementById('layerPopoverContainer'),
+                btnMapLayerIcon: document.getElementById('btnMapLayerIcon'),
+                mapLayerPopover: document.getElementById('mapLayerPopover'),
+                btnCloseLayerPopover: document.getElementById('btnCloseLayerPopover'),
+                activeEraPill: document.getElementById('activeEraPill'),
+                toggleGeoLayer: document.getElementById('toggleGeoLayer'),
+                toggleGeoKnob: document.getElementById('toggleGeoKnob'),
+                toggleRouteLayer: document.getElementById('toggleRouteLayer'),
+                toggleRouteKnob: document.getElementById('toggleRouteKnob'),
+                // Travel status & Toast
+                travelStatusPill: document.getElementById('travelStatusPill'),
+                travelStatusEmoji: document.getElementById('travelStatusEmoji'),
+                travelStatusText: document.getElementById('travelStatusText'),
+                btnCancelTravel: document.getElementById('btnCancelTravel'),
+                appToast: document.getElementById('appToast'),
+                appToastText: document.getElementById('appToastText'),
+                btnToastAction: document.getElementById('btnToastAction'),
+                btnCloseToast: document.getElementById('btnCloseToast'),
+                // Right Panel
+                detailPanel: document.getElementById('detailPanel'),
+                detailScrollArea: document.getElementById('detailScrollArea'),
+                detailOrderBadge: document.getElementById('detailOrderBadge'),
+                detailPhaseTag: document.getElementById('detailPhaseTag'),
+                panelProgressBadge: document.getElementById('panelProgressBadge'),
+                detailTitle: document.getElementById('detailTitle'),
+                detailDate: document.getElementById('detailDate'),
+                detailAlias: document.getElementById('detailAlias'),
+                detailWorldSituation: document.getElementById('detailWorldSituation'),
+                detailContext: document.getElementById('detailContext'),
+                detailWorkList: document.getElementById('detailWorkList'),
+                detailIdeology: document.getElementById('detailIdeology'),
+                detailQuote: document.getElementById('detailQuote'),
+                journeyCompletedCard: document.getElementById('journeyCompletedCard'),
+                btnOpenVictoryModal: document.getElementById('btnOpenVictoryModal'),
+                btnPrevStop: document.getElementById('btnPrevStop'),
+                btnNextStop: document.getElementById('btnNextStop'),
+                btnNextStopLabel: document.getElementById('btnNextStopLabel'),
+                btnCloseMobilePanel: document.getElementById('btnCloseMobilePanel'),
+                btnOpenMobilePanel: document.getElementById('btnOpenMobilePanel'),
+                // Timeline
+                timelineContainer: document.getElementById('timelineContainer'),
+                // Checkpoint Quiz Modal
+                quizModal: document.getElementById('quizModal'),
+                btnCloseQuiz: document.getElementById('btnCloseQuiz'),
+                quizTransportBadge: document.getElementById('quizTransportBadge'),
+                quizRouteLabel: document.getElementById('quizRouteLabel'),
+                quizModalTitle: document.getElementById('quizModalTitle'),
+                stepPills: [
+                    document.getElementById('stepPill0'),
+                    document.getElementById('stepPill1'),
+                    document.getElementById('stepPill2')
+                ],
+                quizQuestionText: document.getElementById('quizQuestionText'),
+                quizOptions: document.getElementById('quizOptions'),
+                quizFeedback: document.getElementById('quizFeedback'),
+                quizRetryHint: document.getElementById('quizRetryHint'),
+                btnContinueJourney: document.getElementById('btnContinueJourney'),
+                // Victory Modal
+                victoryModal: document.getElementById('victoryModal'),
+                btnVictoryOverview: document.getElementById('btnVictoryOverview'),
+                btnCloseVictory: document.getElementById('btnCloseVictory')
+            };
+
+            const LOCK_SVG = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>`;
+
+            /**
+             * Khởi tạo bản đồ Leaflet với 3 lớp nền thế giới thực tế
+             */
+            function initMap() {
+                try {
+                    map = L.map('map', {
+                        center: [22, 55],
+                        zoom: 3,
+                        minZoom: 2,
+                        maxZoom: 12,
+                        worldCopyJump: true,
+                        zoomControl: true
+                    });
+
+                    // 1. Esri World Physical Map (Mặc định - địa lý tự nhiên không biên giới hiện đại)
+                    baseLayers.physical = L.tileLayer(
+                        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}',
+                        {
+                            attribution: 'Tiles &copy; Esri — US National Park Service',
+                            maxNativeZoom: 8,
+                            maxZoom: 12
+                        }
+                    );
+
+                    // 2. Esri World Imagery (Vệ tinh thực tế)
+                    baseLayers.satellite = L.tileLayer(
+                        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                        {
+                            attribution: 'Tiles &copy; Esri — Earthstar Geographics',
+                            maxNativeZoom: 17,
+                            maxZoom: 12
+                        }
+                    );
+
+                    // 3. Esri World Topo Map (Địa hình Atlas)
+                    baseLayers.atlas = L.tileLayer(
+                        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+                        {
+                            attribution: 'Tiles &copy; Esri — World Topo Map',
+                            maxNativeZoom: 17,
+                            maxZoom: 12
+                        }
+                    );
+
+                    currentBaseLayer = baseLayers.physical.addTo(map);
+                    geoPoliticalGroup = L.layerGroup().addTo(map);
+                    routeGroup = L.layerGroup().addTo(map);
+                    travelLayerGroup = L.layerGroup().addTo(map);
+
+                    // Tạo 10 Marker địa danh
+                    JOURNEY_STOPS.forEach(stop => {
+                        const icon = L.divIcon({
+                            className: 'custom-museum-pin',
+                            html: `<div class="museum-marker" id="marker-${stop.id}">${stop.id}</div>`,
+                            iconSize: [34, 34],
+                            iconAnchor: [17, 17]
+                        });
+
+                        const marker = L.marker(stop.coords, { icon: icon, zIndexOffset: 250 }).addTo(map);
+                        marker.bindTooltip(`${stop.id}. ${stop.shortName} (${stop.yearLabel})`, {
+                            direction: 'top',
+                            offset: [0, -18],
+                            className: 'museum-tooltip'
+                        });
+
+                        marker.on('click', () => {
+                            if (state.travel.active) return;
+                            attemptNavigateToStop(stop.id);
+                        });
+
+                        markersMap.set(stop.id, marker);
+                    });
+                } catch (err) {
+                    console.error('Lỗi khởi tạo bản đồ:', err);
+                }
+            }
+
+            /**
+             * Toán học nội suy đường Polyline theo tỷ lệ chiều dài (0.0 -> 1.0)
+             */
+            function computePolylineMetrics(coords) {
+                const cumDist = [0];
+                let total = 0;
+                for (let i = 1; i < coords.length; i++) {
+                    const dLat = coords[i][0] - coords[i - 1][0];
+                    const dLng = coords[i][1] - coords[i - 1][1];
+                    total += Math.hypot(dLat, dLng);
+                    cumDist.push(total);
+                }
+                return { cumDist, total };
+            }
+
+            function samplePolylineAtFraction(coords, metrics, fraction) {
+                const f = Math.max(0, Math.min(1, fraction));
+                if (f <= 0) return { point: coords[0], subpath: [coords[0]] };
+                if (f >= 1) return { point: coords[coords.length - 1], subpath: [...coords] };
+
+                const targetDist = f * metrics.total;
+                const subpath = [coords[0]];
+
+                for (let i = 1; i < coords.length; i++) {
+                    if (metrics.cumDist[i] >= targetDist) {
+                        const segLen = metrics.cumDist[i] - metrics.cumDist[i - 1];
+                        const segT = segLen > 0 ? (targetDist - metrics.cumDist[i - 1]) / segLen : 0;
+                        const lat = coords[i - 1][0] + (coords[i][0] - coords[i - 1][0]) * segT;
+                        const lng = coords[i - 1][1] + (coords[i][1] - coords[i - 1][1]) * segT;
+                        const pt = [lat, lng];
+                        subpath.push(pt);
+                        return { point: pt, subpath };
+                    }
+                    subpath.push(coords[i]);
+                }
+                return { point: coords[coords.length - 1], subpath: [...coords] };
+            }
+
+            /**
+             * Vẽ lớp Địa chính trị lịch sử & các tuyến đường đã mở khóa
+             */
+            function renderHistoricalEraLayer(eraKey) {
+                const era = ERA_DATA[eraKey];
+                if (!era || !map) return;
+
+                state.activeEraMap = eraKey;
+                dom.mapEl.classList.remove('map-era-1', 'map-era-2', 'map-era-3');
+                dom.mapEl.classList.add(era.eraClass);
+                dom.activeEraPill.textContent = era.shortLabel;
+
+                geoPoliticalGroup.clearLayers();
+                era.regions.forEach(region => {
+                    const geoFeature = {
+                        type: 'Feature',
+                        properties: { name: region.name },
+                        geometry: { type: 'Polygon', coordinates: [region.polygon] }
+                    };
+
+                    const polygonLayer = L.geoJSON(geoFeature, {
+                        style: {
+                            color: region.color,
+                            weight: 1.5,
+                            opacity: 0.72,
+                            fillColor: region.color,
+                            fillOpacity: region.fillOpacity,
+                            dashArray: '4, 4'
+                        }
+                    });
+                    polygonLayer.bindTooltip(region.name, { sticky: true, className: 'museum-tooltip' });
+                    geoPoliticalGroup.addLayer(polygonLayer);
+
+                    const labelIcon = L.divIcon({
+                        className: 'geo-era-label',
+                        html: `<div class="geo-era-label-inner" style="background:${region.labelBg};color:${region.labelColor};">${region.name}</div>`,
+                        iconSize: null
+                    });
+                    geoPoliticalGroup.addLayer(L.marker(region.labelCoords, { icon: labelIcon, interactive: false, zIndexOffset: 50 }));
+                });
+
+                if (state.showGeoLayer) {
+                    if (!map.hasLayer(geoPoliticalGroup)) map.addLayer(geoPoliticalGroup);
+                } else if (map.hasLayer(geoPoliticalGroup)) {
+                    map.removeLayer(geoPoliticalGroup);
+                }
+
+                renderUnlockedRoutes();
+            }
+
+            /**
+             * Vẽ toàn bộ tuyến đường của các chặng đã mở khóa (đậm) và chặng kế tiếp (mờ)
+             */
+            function renderUnlockedRoutes() {
+                if (!map) return;
+                routeGroup.clearLayers();
+
+                for (let targetId = 2; targetId <= JOURNEY_STOPS.length; targetId++) {
+                    const seg = SEGMENT_ROUTES[targetId];
+                    if (!seg) continue;
+
+                    const isUnlocked = targetId <= state.maxUnlockedStopId;
+                    if (isUnlocked) {
+                        routeGroup.addLayer(L.polyline(seg.coords, {
+                            color: '#F9F5EB',
+                            weight: 4.5,
+                            opacity: 0.6,
+                            lineJoin: 'round'
+                        }));
+                        routeGroup.addLayer(L.polyline(seg.coords, {
+                            color: '#9B1C1C',
+                            weight: 2.8,
+                            opacity: 0.9,
+                            dashArray: '9, 7',
+                            className: 'animated-route',
+                            lineJoin: 'round'
+                        }));
+                    } else if (targetId === state.maxUnlockedStopId + 1) {
+                        // Tuyến mờ gợi ý chặng sắp khởi hành
+                        routeGroup.addLayer(L.polyline(seg.coords, {
+                            color: '#6B7280',
+                            weight: 2,
+                            opacity: 0.45,
+                            dashArray: '5, 8',
+                            lineJoin: 'round'
+                        }));
+                    }
+                }
+
+                if (state.showRouteLayer) {
+                    if (!map.hasLayer(routeGroup)) map.addLayer(routeGroup);
+                } else if (map.hasLayer(routeGroup)) {
+                    map.removeLayer(routeGroup);
+                }
+            }
+
+            /**
+             * Bật/tắt Popover chọn nền bản đồ (từ icon nhỏ góc trên phải)
+             */
+            function setLayerPopoverOpen(isOpen) {
+                state.isLayerPopoverOpen = isOpen;
+                dom.btnMapLayerIcon.setAttribute('aria-expanded', String(isOpen));
+                if (isOpen) {
+                    dom.mapLayerPopover.classList.remove('hidden');
+                    dom.mapLayerPopover.classList.add('flex');
+                    dom.btnMapLayerIcon.classList.add('bg-crimson', 'text-paper');
+                    dom.btnMapLayerIcon.classList.remove('bg-paper/95', 'text-crimson');
+                } else {
+                    dom.mapLayerPopover.classList.add('hidden');
+                    dom.mapLayerPopover.classList.remove('flex');
+                    dom.btnMapLayerIcon.classList.remove('bg-crimson', 'text-paper');
+                    dom.btnMapLayerIcon.classList.add('bg-paper/95', 'text-crimson');
+                }
+            }
+
+            function switchBaseMap(mode) {
+                if (!map || !baseLayers[mode]) return;
+                state.activeBaseMap = mode;
+                if (currentBaseLayer) map.removeLayer(currentBaseLayer);
+                currentBaseLayer = baseLayers[mode].addTo(map);
+
+                dom.mapEl.classList.toggle('map-raw-tile', mode !== 'physical');
+                dom.basemapButtons.forEach(btn => {
+                    const isSelected = btn.dataset.basemap === mode;
+                    btn.classList.toggle('bg-crimson', isSelected);
+                    btn.classList.toggle('text-paper', isSelected);
+                    btn.classList.toggle('font-semibold', isSelected);
+                    btn.classList.toggle('shadow-sm', isSelected);
+                    btn.classList.toggle('text-ink', !isSelected);
+                    btn.classList.toggle('font-medium', !isSelected);
+                    btn.classList.toggle('hover:bg-paperDark', !isSelected);
+                });
+            }
+
+            /**
+             * Toast thông báo gọn gàng
+             */
+            function showToast(message, showAction = false) {
+                if (state.toastTimer) clearTimeout(state.toastTimer);
+                dom.appToastText.textContent = message;
+                dom.btnToastAction.classList.toggle('hidden', !showAction);
+                dom.appToast.classList.remove('hidden');
+                state.toastTimer = setTimeout(() => dom.appToast.classList.add('hidden'), 4800);
+            }
+
+            function hideToast() {
+                if (state.toastTimer) clearTimeout(state.toastTimer);
+                dom.appToast.classList.add('hidden');
+            }
+
+            /**
+             * Điều hướng khi bấm vào một chặng bất kỳ
+             */
+            function attemptNavigateToStop(targetStopId) {
+                if (state.travel.active) return;
+                hideToast();
+
+                if (targetStopId <= state.maxUnlockedStopId) {
+                    selectStop(targetStopId, true);
+                    openMobilePanel();
+                } else if (targetStopId === state.maxUnlockedStopId + 1) {
+                    startSegmentedJourney(targetStopId);
+                } else {
+                    const nextId = state.maxUnlockedStopId + 1;
+                    const nextStop = JOURNEY_STOPS.find(s => s.id === nextId);
+                    showToast(`Hãy lần lượt vượt qua Chặng ${nextId} (${nextStop ? nextStop.shortName : ''}) trước nhé!`, true);
+                }
+            }
+
+            /**
+             * =================================================================
+             * CƠ CHẾ DI CHUYỂN TỪNG ĐOẠN & DỪNG LẠI TRẢ LỜI TRẮC NGHIỆM (3 TRẠM)
+             * =================================================================
+             */
+            function startSegmentedJourney(targetStopId) {
+                const seg = SEGMENT_ROUTES[targetStopId];
+                const fromStop = JOURNEY_STOPS.find(s => s.id === targetStopId - 1);
+                const toStop = JOURNEY_STOPS.find(s => s.id === targetStopId);
+                if (!seg || !fromStop || !toStop || !map) return;
+
+                // Thu gọn panel trên mobile để xem toàn màn hình phương tiện di chuyển
+                if (window.innerWidth < 768) closeMobilePanel();
+                setLayerPopoverOpen(false);
+                hideToast();
+
+                // Nếu giai đoạn đích khác giai đoạn hiện tại, chuyển nền địa chính trị sang giai đoạn phù hợp
+                if (state.activeEraMap !== fromStop.phase) {
+                    renderHistoricalEraLayer(fromStop.phase);
+                }
+
+                // Khởi tạo lớp di chuyển
+                cleanupTravelLayers();
+                state.travel.active = true;
+                state.travel.targetStopId = targetStopId;
+                state.travel.currentLegIndex = 0;
+                state.travel.questionPassed = false;
+
+                const metrics = computePolylineMetrics(seg.coords);
+
+                // 1. Đường dẫn mờ của cả đoạn hành trình
+                state.travel.guideLine = L.polyline(seg.coords, {
+                    color: '#C59B27',
+                    weight: 3,
+                    opacity: 0.55,
+                    dashArray: '6, 8',
+                    lineJoin: 'round'
+                }).addTo(travelLayerGroup);
+
+                // 2. Vệt đường đỏ son rực rỡ vẽ dần theo phương tiện
+                state.travel.traveledLine = L.polyline([seg.coords[0]], {
+                    color: '#9B1C1C',
+                    weight: 4.5,
+                    opacity: 0.98,
+                    lineJoin: 'round'
+                }).addTo(travelLayerGroup);
+
+                // 3. Đánh dấu 3 Trạm kiểm tra (25%, 55%, 82%) trên bản đồ
+                state.travel.checkpointMarkers = CHECKPOINT_FRACTIONS.map((frac, idx) => {
+                    const pos = samplePolylineAtFraction(seg.coords, metrics, frac).point;
+                    const cpIcon = L.divIcon({
+                        className: 'custom-cp-pin',
+                        html: `<div class="checkpoint-dot" id="cp-dot-${idx}"></div>`,
+                        iconSize: [14, 14],
+                        iconAnchor: [7, 7]
+                    });
+                    const m = L.marker(pos, { icon: cpIcon, zIndexOffset: 600 }).addTo(travelLayerGroup);
+                    m.bindTooltip(`Trạm kiểm tra ${idx + 1}/3`, { direction: 'top', offset: [0, -8], className: 'museum-tooltip' });
+                    return m;
+                });
+
+                // 4. Biểu tượng phương tiện di chuyển (🚢 hoặc 🚂)
+                const vehicleIcon = L.divIcon({
+                    className: 'custom-vehicle-pin',
+                    html: `<div class="travel-vehicle-wrap" id="travelVehicleEl">${seg.emoji}</div>`,
+                    iconSize: [42, 42],
+                    iconAnchor: [21, 21]
+                });
+                state.travel.vehicleMarker = L.marker(seg.coords[0], {
+                    icon: vehicleIcon,
+                    zIndexOffset: 1200
+                }).addTo(travelLayerGroup);
+
+                // Đưa bản đồ tới điểm xuất phát với mức zoom thoáng dễ theo dõi, rồi chạy đoạn 1
+                map.setView(seg.coords[0], seg.travelZoom || 4, { animate: true, duration: 0.65 });
+                dom.travelStatusEmoji.textContent = seg.emoji;
+                dom.travelStatusPill.classList.remove('hidden');
+
+                setTimeout(() => {
+                    if (state.travel.active) {
+                        runTravelLeg(0);
+                    }
+                }, 680);
+            }
+
+            /**
+             * Chạy từng đoạn nhỏ:
+             * - legIndex 0: 0.00 -> 0.25 (dừng hỏi Câu 1/3)
+             * - legIndex 1: 0.25 -> 0.55 (dừng hỏi Câu 2/3)
+             * - legIndex 2: 0.55 -> 0.82 (dừng hỏi Câu 3/3)
+             * - legIndex 3: 0.82 -> 1.00 (cập bến mở khóa Chặng N+1)
+             */
+            function runTravelLeg(legIndex) {
+                if (!state.travel.active) return;
+
+                const targetId = state.travel.targetStopId;
+                const seg = SEGMENT_ROUTES[targetId];
+                const toStop = JOURNEY_STOPS.find(s => s.id === targetId);
+                const metrics = computePolylineMetrics(seg.coords);
+
+                const stopsFractions = [0, CHECKPOINT_FRACTIONS[0], CHECKPOINT_FRACTIONS[1], CHECKPOINT_FRACTIONS[2], 1];
+                const fStart = stopsFractions[legIndex];
+                const fEnd = stopsFractions[legIndex + 1];
+
+                state.travel.currentLegIndex = legIndex;
+
+                // Tắt hiệu ứng nhịp dừng khi bắt đầu chạy tiếp
+                const vehicleEl = document.getElementById('travelVehicleEl');
+                if (vehicleEl) vehicleEl.classList.remove('paused-pulse');
+
+                if (legIndex < 3) {
+                    dom.travelStatusText.textContent = `Đang tiến tới Trạm kiểm tra ${legIndex + 1}/3...`;
+                } else {
+                    dom.travelStatusText.textContent = `Đang cập bến Chặng ${targetId}: ${toStop.shortName}...`;
+                }
+
+                const durationMs = legIndex === 3 ? 1350 : 1650;
+                const startTime = performance.now();
+
+                function animateFrame(now) {
+                    if (!state.travel.active) return;
+
+                    const rawT = Math.min(1, (now - startTime) / durationMs);
+                    // Ease-in-out cubic mượt mà
+                    const easedT = rawT < 0.5 ? 2 * rawT * rawT : 1 - Math.pow(-2 * rawT + 2, 2) / 2;
+                    const currentFrac = fStart + (fEnd - fStart) * easedT;
+
+                    const sampled = samplePolylineAtFraction(seg.coords, metrics, currentFrac);
+                    state.travel.vehicleMarker.setLatLng(sampled.point);
+                    state.travel.traveledLine.setLatLngs(sampled.subpath);
+                    map.panTo(sampled.point, { animate: false });
+
+                    if (rawT < 1) {
+                        state.travel.animFrameId = requestAnimationFrame(animateFrame);
+                    } else {
+                        state.travel.animFrameId = null;
+                        onTravelLegReached(legIndex);
+                    }
+                }
+
+                state.travel.animFrameId = requestAnimationFrame(animateFrame);
+            }
+
+            /**
+             * Xử lý khi phương tiện chạy xong 1 đoạn nhỏ
+             */
+            function onTravelLegReached(legIndex) {
+                if (!state.travel.active) return;
+
+                if (legIndex < 3) {
+                    // Dừng hẳn tại Trạm kiểm tra (1/3, 2/3 hoặc 3/3) với hiệu ứng pulse
+                    const vehicleEl = document.getElementById('travelVehicleEl');
+                    if (vehicleEl) vehicleEl.classList.add('paused-pulse');
+
+                    const cpDot = document.getElementById(`cp-dot-${legIndex}`);
+                    if (cpDot) cpDot.classList.add('current');
+
+                    dom.travelStatusText.textContent = `Đã dừng tại Trạm ${legIndex + 1}/3 — Trả lời để đi tiếp`;
+
+                    // Mở hộp thoại câu hỏi tương ứng sau nhịp dừng ngắn 320ms
+                    setTimeout(() => {
+                        if (state.travel.active) {
+                            openCheckpointQuizModal(state.travel.targetStopId, legIndex);
+                        }
+                    }, 320);
+                } else {
+                    // Đã chạy nốt đoạn cuối (82% -> 100%) và cập bến Chặng N+1!
+                    const unlockedId = state.travel.targetStopId;
+                    cleanupTravelLayers();
+                    state.travel.active = false;
+                    dom.travelStatusPill.classList.add('hidden');
+
+                    if (unlockedId > state.maxUnlockedStopId) {
+                        state.maxUnlockedStopId = unlockedId;
+                    }
+
+                    const targetStop = JOURNEY_STOPS.find(s => s.id === unlockedId);
+                    if (state.filterPhase !== 'all' && targetStop && targetStop.phase !== state.filterPhase) {
+                        applyPhaseFilter('all', false);
+                    }
+
+                    renderUnlockedRoutes();
+                    selectStop(unlockedId, true);
+                    openMobilePanel();
+
+                    if (unlockedId === JOURNEY_STOPS.length) {
+                        setTimeout(() => dom.victoryModal.classList.remove('hidden'), 1400);
+                    } else {
+                        showToast(`Đã cập bến và mở khóa Chặng ${unlockedId}: ${targetStop.shortName}!`, false);
+                    }
+                }
+            }
+
+            /**
+             * Hủy chuyến đi nếu người dùng bấm Hủy hoặc đóng Modal giữa chừng
+             */
+            function cancelActiveTravel() {
+                if (state.travel.animFrameId) {
+                    cancelAnimationFrame(state.travel.animFrameId);
+                    state.travel.animFrameId = null;
+                }
+                if (state.travel.autoContinueTimer) {
+                    clearTimeout(state.travel.autoContinueTimer);
+                    state.travel.autoContinueTimer = null;
+                }
+                cleanupTravelLayers();
+                state.travel.active = false;
+                dom.travelStatusPill.classList.add('hidden');
+                dom.quizModal.classList.add('hidden');
+
+                // Đưa góc nhìn về lại chặng đang đứng
+                const currentStop = JOURNEY_STOPS.find(s => s.id === state.activeStopId);
+                if (currentStop && map) {
+                    map.flyTo(currentStop.coords, currentStop.zoom || 6, { duration: 1.0 });
+                }
+            }
+
+            function cleanupTravelLayers() {
+                if (travelLayerGroup) travelLayerGroup.clearLayers();
+                state.travel.vehicleMarker = null;
+                state.travel.traveledLine = null;
+                state.travel.guideLine = null;
+                state.travel.checkpointMarkers = [];
+            }
+
+            /**
+             * Mở Modal Câu hỏi tại Trạm kiểm tra (questionIdx = 0, 1 hoặc 2)
+             */
+            function openCheckpointQuizModal(targetStopId, questionIdx) {
+                const questions = CHECKPOINT_QUIZZES[targetStopId];
+                const seg = SEGMENT_ROUTES[targetStopId];
+                const toStop = JOURNEY_STOPS.find(s => s.id === targetStopId);
+                if (!questions || !questions[questionIdx] || !seg || !toStop) return;
+
+                const q = questions[questionIdx];
+                state.travel.questionPassed = false;
+
+                dom.quizTransportBadge.textContent = `${seg.emoji} Trạm dừng ${questionIdx + 1} / 3`;
+                dom.quizRouteLabel.textContent = `Chặng ${targetStopId - 1} → Chặng ${targetStopId} (${toStop.shortName})`;
+                dom.quizModalTitle.textContent = `Câu hỏi ${questionIdx + 1}/3 — Trả lời đúng để đi tiếp`;
+
+                // Cập nhật 3 thanh bước Trạm 1/3 -> Trạm 2/3 -> Trạm 3/3
+                dom.stepPills.forEach((pill, i) => {
+                    if (i < questionIdx) {
+                        pill.className = 'flex-1 text-center py-1 rounded-xl text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300';
+                        pill.textContent = `✓ Trạm ${i + 1}/3`;
+                    } else if (i === questionIdx) {
+                        pill.className = 'flex-1 text-center py-1 rounded-xl text-[11px] font-bold bg-crimson text-paper shadow-sm';
+                        pill.textContent = `● Trạm ${i + 1}/3`;
+                    } else {
+                        pill.className = 'flex-1 text-center py-1 rounded-xl text-[11px] font-semibold bg-paper text-inkSoft/70 border border-gold/25';
+                        pill.textContent = `Trạm ${i + 1}/3`;
+                    }
+                });
+
+                dom.quizQuestionText.textContent = q.question;
+                dom.quizOptions.innerHTML = '';
+                dom.quizFeedback.classList.add('hidden');
+                dom.quizRetryHint.classList.add('hidden');
+                dom.btnContinueJourney.classList.add('hidden');
+
+                const letters = ['A', 'B', 'C', 'D'];
+                q.options.forEach((optText, idx) => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'w-full text-left p-3.5 rounded-2xl border border-gold/45 bg-white/90 hover:bg-gold/15 hover:border-crimson/55 transition-all flex items-start gap-3 text-xs sm:text-[13.5px] font-medium text-ink cursor-pointer';
+                    btn.innerHTML = `
+                        <span class="w-6 h-6 rounded-lg bg-paperDark text-crimson font-bold flex items-center justify-center shrink-0 text-xs">${letters[idx]}</span>
+                        <span class="leading-snug">${optText}</span>
+                    `;
+                    btn.addEventListener('click', () => handleCheckpointAnswer(idx, btn, q, questionIdx));
+                    dom.quizOptions.appendChild(btn);
+                });
+
+                dom.quizModal.classList.remove('hidden');
+            }
+
+            /**
+             * Xử lý chọn đáp án tại Trạm kiểm tra
+             */
+            function handleCheckpointAnswer(selectedIdx, clickedBtn, q, questionIdx) {
+                if (state.travel.questionPassed) return;
+
+                if (selectedIdx === q.correctIndex) {
+                    state.travel.questionPassed = true;
+
+                    const allBtns = dom.quizOptions.querySelectorAll('button');
+                    allBtns.forEach((btn, idx) => {
+                        btn.disabled = true;
+                        btn.classList.remove('hover:bg-gold/15', 'hover:border-crimson/55', 'cursor-pointer');
+                        if (idx === q.correctIndex) {
+                            btn.classList.add('bg-emerald-50', 'border-emerald-600', 'text-emerald-900', 'font-semibold', 'ring-2', 'ring-emerald-400/45');
+                        } else {
+                            btn.classList.add('opacity-50');
+                        }
+                    });
+
+                    // Đánh dấu trạm kiểm tra đã vượt qua màu xanh lá
+                    const cpDot = document.getElementById(`cp-dot-${questionIdx}`);
+                    if (cpDot) {
+                        cpDot.classList.remove('current');
+                        cpDot.classList.add('passed');
+                    }
+
+                    dom.quizRetryHint.classList.add('hidden');
+                    dom.quizFeedback.className = 'mt-4 p-3.5 rounded-2xl border border-emerald-300 bg-emerald-50 text-emerald-900 text-xs sm:text-[13px] leading-relaxed';
+                    dom.quizFeedback.innerHTML = `<strong class="block mb-0.5">✓ Chính xác!</strong>${q.explanation}`;
+                    dom.quizFeedback.classList.remove('hidden');
+
+                    dom.btnContinueJourney.textContent = questionIdx === 2
+                        ? 'Cập bến chặng mới →'
+                        : 'Tiếp tục hành trình →';
+                    dom.btnContinueJourney.classList.remove('hidden');
+                } else {
+                    // Trả lời sai: báo đỏ, rung nhẹ, gợi ý và bắt chọn lại
+                    clickedBtn.disabled = true;
+                    clickedBtn.classList.remove('hover:bg-gold/15', 'hover:border-crimson/55', 'cursor-pointer', 'bg-white/90');
+                    clickedBtn.classList.add('bg-red-50', 'border-crimson', 'text-crimsonDark', 'opacity-75', 'animate-shake');
+
+                    dom.quizRetryHint.classList.remove('hidden');
+                    dom.quizFeedback.className = 'mt-4 p-3.5 rounded-2xl border border-crimson/35 bg-crimson/10 text-crimsonDark text-xs sm:text-[13px] leading-relaxed';
+                    dom.quizFeedback.innerHTML = `<strong class="block mb-0.5">✕ Chưa chính xác!</strong>Hãy nhớ lại mốc lịch sử và tư tưởng của chặng hành trình này, sau đó chọn lại đáp án đúng nhé.`;
+                    dom.quizFeedback.classList.remove('hidden');
+                }
+            }
+
+            /**
+             * Đóng Modal và tiếp tục cho phương tiện chạy sang đoạn tiếp theo
+             */
+            function proceedToNextLeg() {
+                if (state.travel.autoContinueTimer) {
+                    clearTimeout(state.travel.autoContinueTimer);
+                    state.travel.autoContinueTimer = null;
+                }
+                if (!state.travel.active) return;
+
+                dom.quizModal.classList.add('hidden');
+                const nextLeg = state.travel.currentLegIndex + 1;
+                runTravelLeg(nextLeg);
+            }
+
+            /**
+             * Cập nhật Marker & Timeline
+             */
+            function refreshMapMarkers() {
+                JOURNEY_STOPS.forEach(item => {
+                    const markerEl = document.getElementById(`marker-${item.id}`);
+                    const markerObj = markersMap.get(item.id);
+                    if (!markerEl || !markerObj) return;
+
+                    const isUnlocked = item.id <= state.maxUnlockedStopId;
+                    const isNextUnlock = item.id === state.maxUnlockedStopId + 1;
+                    const isActive = item.id === state.activeStopId;
+                    const isInFilter = state.filterPhase === 'all' || item.phase === state.filterPhase;
+
+                    markerEl.classList.remove('active', 'dimmed', 'locked', 'next-unlock');
+
+                    if (isUnlocked) {
+                        markerEl.innerHTML = String(item.id);
+                        markerObj.setTooltipContent(`${item.id}. ${item.shortName} (${item.yearLabel})`);
+                        if (isActive) {
+                            markerEl.classList.add('active');
+                            markerObj.setZIndexOffset(1000);
+                        } else if (!isInFilter) {
+                            markerEl.classList.add('dimmed');
+                            markerObj.setZIndexOffset(150);
+                        } else {
+                            markerObj.setZIndexOffset(350);
+                        }
+                    } else if (isNextUnlock) {
+                        markerEl.innerHTML = LOCK_SVG;
+                        markerEl.classList.add('next-unlock');
+                        markerObj.setZIndexOffset(450);
+                        markerObj.setTooltipContent(`🔒 Chặng ${item.id}: ${item.shortName} — Bấm để khởi hành (3 trạm kiểm tra)`);
+                    } else {
+                        markerEl.innerHTML = LOCK_SVG;
+                        markerEl.classList.add('locked');
+                        markerObj.setZIndexOffset(100);
+                        markerObj.setTooltipContent(`🔒 Chặng ${item.id}: ${item.shortName} (Chưa mở khóa)`);
+                    }
+                });
+            }
+
+            function renderTimeline() {
+                dom.timelineContainer.innerHTML = '';
+
+                JOURNEY_STOPS.forEach((stop, index) => {
+                    const isUnlocked = stop.id <= state.maxUnlockedStopId;
+                    const isNextUnlock = stop.id === state.maxUnlockedStopId + 1;
+                    const isActive = stop.id === state.activeStopId;
+                    const isInFilter = state.filterPhase === 'all' || stop.phase === state.filterPhase;
+
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.dataset.stopId = stop.id;
+
+                    let stateClasses = '';
+                    if (isActive) {
+                        stateClasses = 'bg-crimson text-paper border-crimson shadow-sm';
+                    } else if (isUnlocked) {
+                        stateClasses = isInFilter
+                            ? 'bg-paperDark/85 hover:bg-gold/25 text-ink border-gold/45'
+                            : 'bg-paperDark/40 text-inkSoft/65 border-gold/20 opacity-65';
+                    } else if (isNextUnlock) {
+                        stateClasses = 'bg-amber-50 hover:bg-gold/25 text-crimsonDark border-dashed border-crimson/60';
+                    } else {
+                        stateClasses = 'bg-paperDark/35 text-inkSoft/60 border-gold/20 opacity-60 hover:opacity-85';
+                    }
+
+                    btn.className = `shrink-0 flex items-center gap-2 px-2.5 py-1.5 rounded-xl border transition-all text-left cursor-pointer ${stateClasses}`;
+
+                    const badgeHtml = isUnlocked
+                        ? `<span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
+                              isActive ? 'bg-gold text-ink' : 'bg-crimson/15 text-crimson'
+                          }">${stop.id}</span>`
+                        : `<span class="w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
+                              isNextUnlock ? 'bg-crimson text-goldLight' : 'bg-inkSoft/20 text-inkSoft'
+                          }">${LOCK_SVG}</span>`;
+
+                    btn.innerHTML = `
+                        ${badgeHtml}
+                        <div class="leading-tight">
+                            <div class="text-[10px] font-bold ${
+                                isActive ? 'text-goldLight' : isUnlocked ? 'text-crimson' : isNextUnlock ? 'text-crimsonDark' : 'text-inkSoft'
+                            }">${stop.yearLabel}</div>
+                            <div class="text-[11px] font-semibold whitespace-nowrap">${stop.shortName}</div>
+                        </div>
+                    `;
+
+                    btn.addEventListener('click', () => {
+                        if (state.travel.active) return;
+                        if (!isInFilter && isUnlocked) applyPhaseFilter('all', false);
+                        attemptNavigateToStop(stop.id);
+                    });
+
+                    dom.timelineContainer.appendChild(btn);
+
+                    if (index < JOURNEY_STOPS.length - 1) {
+                        const arrow = document.createElement('span');
+                        arrow.className = `text-[11px] font-bold shrink-0 select-none ${
+                            stop.id < state.maxUnlockedStopId ? 'text-crimson' : 'text-gold/45'
+                        }`;
+                        arrow.textContent = '→';
+                        dom.timelineContainer.appendChild(arrow);
+                    }
+                });
+
+                const activeBtn = dom.timelineContainer.querySelector(`button[data-stop-id="${state.activeStopId}"]`);
+                if (activeBtn) {
+                    activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                }
+            }
+
+            /**
+             * Hiển thị chi tiết 1 chặng đã mở khóa lên bảng bên phải
+             */
+            function selectStop(stopId, shouldFly = true) {
+                const stop = JOURNEY_STOPS.find(s => s.id === stopId);
+                if (!stop) return;
+
+                state.activeStopId = stop.id;
+
+                if (state.activeEraMap !== stop.phase || geoPoliticalGroup.getLayers().length === 0) {
+                    renderHistoricalEraLayer(stop.phase);
+                }
+
+                // Cập nhật Header bảng bên phải & thanh tiêu đề
+                dom.detailOrderBadge.textContent = `Chặng ${String(stop.id).padStart(2, '0')}`;
+                dom.detailPhaseTag.textContent = stop.phase;
+                dom.panelProgressBadge.textContent = `${state.maxUnlockedStopId}/${JOURNEY_STOPS.length} chặng`;
+                if (dom.headerProgressBadge) {
+                    dom.headerProgressBadge.textContent = `Đã mở: ${state.maxUnlockedStopId}/${JOURNEY_STOPS.length}`;
+                }
+                dom.detailTitle.textContent = stop.name;
+                dom.detailDate.textContent = stop.date;
+                dom.detailAlias.textContent = stop.alias;
+
+                // Nội dung thân bảng
+                dom.detailWorldSituation.textContent = WORLD_SITUATIONS[stop.id] || '';
+                dom.detailContext.textContent = stop.context;
+                dom.detailWorkList.innerHTML = stop.work.map(item => `
+                    <li class="flex items-start gap-2.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-crimson mt-2 shrink-0"></span>
+                        <span>${item}</span>
+                    </li>
+                `).join('');
+                dom.detailIdeology.textContent = stop.ideology;
+                dom.detailQuote.textContent = stop.quote;
+
+                dom.journeyCompletedCard.classList.toggle('hidden', state.maxUnlockedStopId < JOURNEY_STOPS.length);
+                dom.detailScrollArea.scrollTo({ top: 0, behavior: 'smooth' });
+
+                // Cập nhật Sticky Footer
+                dom.btnPrevStop.disabled = stop.id <= 1;
+                if (stop.id >= JOURNEY_STOPS.length) {
+                    dom.btnNextStop.disabled = true;
+                    dom.btnNextStopLabel.textContent = 'Đã hoàn thành (1941) ★';
+                } else {
+                    dom.btnNextStop.disabled = false;
+                    const nextId = stop.id + 1;
+                    if (nextId > state.maxUnlockedStopId) {
+                        const seg = SEGMENT_ROUTES[nextId];
+                        dom.btnNextStopLabel.textContent = `${seg ? seg.emoji : ''} Khởi hành tới Chặng ${nextId} →`;
+                    } else {
+                        dom.btnNextStopLabel.textContent = `Chặng tiếp theo (${nextId}) →`;
+                    }
+                }
+
+                refreshMapMarkers();
+                renderTimeline();
+
+                if (map && shouldFly) {
+                    map.flyTo(stop.coords, stop.zoom || 6, {
+                        duration: 1.35,
+                        easeLinearity: 0.25
+                    });
+                }
+            }
+
+            /**
+             * Bộ lọc 3 giai đoạn
+             */
+            function applyPhaseFilter(phase, zoomToEra = true) {
+                state.filterPhase = phase;
+                dom.mobilePhaseSelect.value = phase;
+
+                dom.phaseButtons.forEach(btn => {
+                    const isSelected = btn.dataset.phase === phase;
+                    btn.classList.toggle('bg-crimson', isSelected);
+                    btn.classList.toggle('text-paper', isSelected);
+                    btn.classList.toggle('shadow-sm', isSelected);
+                    btn.classList.toggle('font-semibold', isSelected);
+                    btn.classList.toggle('text-ink', !isSelected);
+                    btn.classList.toggle('font-medium', !isSelected);
+                });
+
+                if (phase !== 'all') {
+                    renderHistoricalEraLayer(phase);
+                    const unlockedInPhase = JOURNEY_STOPS.filter(s => s.phase === phase && s.id <= state.maxUnlockedStopId);
+                    if (unlockedInPhase.length > 0) {
+                        selectStop(unlockedInPhase[0].id, false);
+                    } else {
+                        refreshMapMarkers();
+                        renderTimeline();
+                    }
+                    if (zoomToEra && map && ERA_DATA[phase]) {
+                        map.flyToBounds(ERA_DATA[phase].bounds, { padding: [35, 35], duration: 1.25 });
+                    }
+                } else {
+                    refreshMapMarkers();
+                    renderTimeline();
+                    if (zoomToEra) showOverview();
+                }
+            }
+
+            function showOverview() {
+                if (state.travel.active || !map) return;
+                if (state.filterPhase !== 'all' && ERA_DATA[state.filterPhase]) {
+                    map.flyToBounds(ERA_DATA[state.filterPhase].bounds, { padding: [35, 35], duration: 1.25 });
+                } else {
+                    const allBounds = L.latLngBounds(JOURNEY_STOPS.map(s => s.coords));
+                    map.flyToBounds(allBounds, { padding: [45, 45], duration: 1.25 });
+                }
+            }
+
+            /**
+             * Chế độ "Mở khóa nhanh" dành cho Giảng viên / Thuyết trình trên lớp
+             */
+            function toggleQuickUnlock() {
+                if (state.travel.active) cancelActiveTravel();
+
+                if (!state.quickUnlockedAll) {
+                    state.quickUnlockedAll = true;
+                    state.maxUnlockedStopId = JOURNEY_STOPS.length;
+                    dom.quickUnlockText.textContent = 'Đặt lại thử thách';
+                    renderUnlockedRoutes();
+                    selectStop(state.activeStopId, false);
+                    showToast('Đã bật chế độ Thuyết trình: Mở khóa toàn bộ 10 chặng lịch sử!', false);
+                } else {
+                    state.quickUnlockedAll = false;
+                    state.maxUnlockedStopId = 1;
+                    dom.quickUnlockText.textContent = 'Mở khóa nhanh';
+                    applyPhaseFilter('all', false);
+                    renderUnlockedRoutes();
+                    selectStop(1, true);
+                    showToast('Đã đặt lại chế độ Thử thách từng chặng từ Bến Nhà Rồng (1911).', false);
+                }
+            }
+
+            function closeMobilePanel() {
+                dom.detailPanel.classList.add('translate-y-full', 'md:translate-y-0');
+                dom.btnOpenMobilePanel.classList.remove('hidden');
+            }
+
+            function openMobilePanel() {
+                dom.detailPanel.classList.remove('translate-y-full');
+                dom.btnOpenMobilePanel.classList.add('hidden');
+            }
+
+            /**
+             * =================================================================
+             * QUẢN LÝ NỀN MENU (TỰ ĐỘNG TẢI tieu de.png / FALLBACK SỬ THI / TẢI ẢNH LÊN)
+             * =================================================================
+             */
+            const MENU_BG_STORAGE_KEY = 'tdcb_custom_menu_bg_v1';
+
+            function applyMenuImageMode(src, isUserUploaded = false) {
+                if (!dom.menuHeroImage) return;
+                dom.menuHeroImage.src = src;
+                dom.menuHeroImage.classList.remove('hidden');
+                dom.menuBuiltinBg.classList.add('hidden');
+                dom.startBtn.classList.remove('mode-builtin');
+                dom.startBtn.classList.add('mode-image');
+                dom.startBtnText.classList.add('hidden');
+                if (isUserUploaded) {
+                    dom.btnResetMenuBg.classList.remove('hidden');
+                }
+            }
+
+            function applyMenuBuiltinMode() {
+                if (!dom.menuHeroImage) return;
+                dom.menuHeroImage.classList.add('hidden');
+                dom.menuHeroImage.removeAttribute('src');
+                dom.menuBuiltinBg.classList.remove('hidden');
+                dom.startBtn.classList.remove('mode-image');
+                dom.startBtn.classList.add('mode-builtin');
+                dom.startBtnText.classList.remove('hidden');
+                dom.btnResetMenuBg.classList.add('hidden');
+            }
+
+            function initMenuBackground() {
+                // 1. Ưu tiên ảnh người dùng đã tải lên lưu trong localStorage
+                try {
+                    const savedBg = localStorage.getItem(MENU_BG_STORAGE_KEY);
+                    if (savedBg) {
+                        const testSaved = new Image();
+                        testSaved.onload = () => applyMenuImageMode(savedBg, true);
+                        testSaved.onerror = () => {
+                            try { localStorage.removeItem(MENU_BG_STORAGE_KEY); } catch (_) {}
+                            tryAutoLoadLocalMenuImage();
+                        };
+                        testSaved.src = savedBg;
+                        return;
+                    }
+                } catch (_) {
+                    // Bỏ qua nếu môi trường sandbox hạn chế localStorage
+                }
+                tryAutoLoadLocalMenuImage();
+            }
+
+            function tryAutoLoadLocalMenuImage() {
+                // 2. Thử tự động tải lần lượt tieu de.png và tieu%20de.png bằng đối tượng Image() (không bao giờ hiện icon vỡ)
+                const candidates = ['tieu de.png', 'tieu%20de.png'];
+                let idx = 0;
+
+                function tryNext() {
+                    if (idx >= candidates.length) {
+                        // Không tìm thấy file ngoài -> dùng nền sử thi tích hợp sẵn
+                        applyMenuBuiltinMode();
+                        return;
+                    }
+                    const candidate = candidates[idx++];
+                    const loader = new Image();
+                    loader.onload = () => applyMenuImageMode(candidate, false);
+                    loader.onerror = tryNext;
+                    loader.src = candidate;
+                }
+                tryNext();
+            }
+
+            function handleMenuBgUpload(event) {
+                const file = event.target.files && event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const dataUrl = e.target && e.target.result;
+                    if (!dataUrl) return;
+                    applyMenuImageMode(dataUrl, true);
+                    try {
+                        localStorage.setItem(MENU_BG_STORAGE_KEY, dataUrl);
+                    } catch (_) {
+                        // Nếu ảnh quá dung lượng localStorage, vẫn hiển thị bình thường trong phiên hiện tại
+                    }
+                };
+                reader.readAsDataURL(file);
+                event.target.value = '';
+            }
+
+            function resetMenuBgToDefault() {
+                try {
+                    localStorage.removeItem(MENU_BG_STORAGE_KEY);
+                } catch (_) {}
+                applyMenuBuiltinMode();
+            }
+
+            /**
+             * =================================================================
+             * HIỆU ỨNG HẠT LỬA VÀNG & CHUYỂN CẢNH MÀN HÌNH MENU (THEO DẤU CHÂN BÁC)
+             * =================================================================
+             */
+            let emberAnimId = null;
+            let emberParticles = [];
+            let isMenuTransitioning = false;
+
+            function initEmberCanvas() {
+                const canvas = dom.emberCanvas;
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) return;
+
+                function resizeCanvas() {
+                    canvas.width = window.innerWidth;
+                    canvas.height = window.innerHeight;
+                }
+                resizeCanvas();
+                window.addEventListener('resize', resizeCanvas);
+
+                const count = 42;
+                emberParticles = Array.from({ length: count }, () => createEmber(canvas.width, canvas.height, true));
+
+                function createEmber(w, h, randomY) {
+                    return {
+                        x: Math.random() * w,
+                        y: randomY ? Math.random() * h : h + Math.random() * 40,
+                        r: Math.random() * 2.2 + 0.8,
+                        vx: (Math.random() - 0.5) * 0.45,
+                        vy: -(Math.random() * 0.75 + 0.35),
+                        alpha: Math.random() * 0.65 + 0.25,
+                        hue: Math.random() > 0.35 ? 42 : 24
+                    };
+                }
+
+                function drawEmbers() {
+                    if (dom.menuScreen.classList.contains('menu-hidden')) {
+                        emberAnimId = null;
+                        return;
+                    }
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    for (let i = 0; i < emberParticles.length; i++) {
+                        const p = emberParticles[i];
+                        p.x += p.vx + Math.sin(p.y * 0.015) * 0.22;
+                        p.y += p.vy;
+                        p.alpha -= 0.0018;
+
+                        if (p.y < -15 || p.alpha <= 0.04) {
+                            emberParticles[i] = createEmber(canvas.width, canvas.height, false);
+                            continue;
+                        }
+
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                        ctx.fillStyle = `hsla(${p.hue}, 96%, 64%, ${p.alpha})`;
+                        ctx.shadowColor = `hsla(${p.hue}, 100%, 58%, 0.9)`;
+                        ctx.shadowBlur = 10;
+                        ctx.fill();
+                        ctx.restore();
+                    }
+                    emberAnimId = requestAnimationFrame(drawEmbers);
+                }
+
+                if (!emberAnimId) {
+                    emberAnimId = requestAnimationFrame(drawEmbers);
+                }
+            }
+
+            function enterMapFromMenu() {
+                if (isMenuTransitioning || dom.menuScreen.classList.contains('menu-hidden')) return;
+                isMenuTransitioning = true;
+
+                dom.menuScreen.classList.add('menu-exit');
+
+                setTimeout(() => {
+                    dom.menuScreen.classList.add('menu-hidden');
+                    isMenuTransitioning = false;
+                    if (emberAnimId) {
+                        cancelAnimationFrame(emberAnimId);
+                        emberAnimId = null;
+                    }
+                    if (map) {
+                        map.invalidateSize();
+                        const firstStop = JOURNEY_STOPS[0];
+                        map.flyTo(firstStop.coords, firstStop.zoom || 6, {
+                            duration: 1.45,
+                            easeLinearity: 0.25
+                        });
+                    }
+                }, 600);
+            }
+
+            function returnToMenu() {
+                if (isMenuTransitioning) return;
+                if (state.travel.active) cancelActiveTravel();
+                dom.victoryModal.classList.add('hidden');
+                setLayerPopoverOpen(false);
+                hideToast();
+
+                dom.menuScreen.classList.remove('menu-hidden');
+                // Đảm bảo trình duyệt nhận trạng thái trước khi bỏ menu-exit để tạo hiệu ứng mượt
+                requestAnimationFrame(() => {
+                    dom.menuScreen.classList.remove('menu-exit');
+                    initEmberCanvas();
+                });
+            }
+
+            /**
+             * Gắn toàn bộ sự kiện tương tác
+             */
+            function bindEvents() {
+                // Sự kiện màn hình Menu mở đầu & tải ảnh nền
+                dom.startBtn.addEventListener('click', enterMapFromMenu);
+                dom.btnBackToMenu.addEventListener('click', returnToMenu);
+                dom.btnUploadMenuBg.addEventListener('click', () => dom.menuBgFileInput.click());
+                dom.menuBgFileInput.addEventListener('change', handleMenuBgUpload);
+                dom.btnResetMenuBg.addEventListener('click', resetMenuBgToDefault);
+
+                // Bộ lọc 3 giai đoạn
+                dom.phaseButtons.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        if (state.travel.active) return;
+                        applyPhaseFilter(btn.dataset.phase, true);
+                    });
+                });
+                dom.mobilePhaseSelect.addEventListener('change', (e) => {
+                    if (state.travel.active) return;
+                    applyPhaseFilter(e.target.value, true);
+                });
+
+                // Toàn cảnh & Mở khóa nhanh
+                dom.btnOverview.addEventListener('click', showOverview);
+                dom.btnQuickUnlock.addEventListener('click', toggleQuickUnlock);
+
+                // Popover chọn nền bản đồ (icon góc trên phải)
+                dom.btnMapLayerIcon.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    setLayerPopoverOpen(!state.isLayerPopoverOpen);
+                });
+                dom.btnCloseLayerPopover.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    setLayerPopoverOpen(false);
+                });
+                document.addEventListener('click', (e) => {
+                    if (state.isLayerPopoverOpen && !dom.layerPopoverContainer.contains(e.target)) {
+                        setLayerPopoverOpen(false);
+                    }
+                });
+
+                dom.basemapButtons.forEach(btn => {
+                    btn.addEventListener('click', () => switchBaseMap(btn.dataset.basemap));
+                });
+
+                // Công tắc bật/tắt địa chính trị & tuyến đường
+                dom.toggleGeoLayer.addEventListener('click', () => {
+                    state.showGeoLayer = !state.showGeoLayer;
+                    dom.toggleGeoLayer.setAttribute('aria-checked', String(state.showGeoLayer));
+                    dom.toggleGeoLayer.classList.toggle('bg-crimson', state.showGeoLayer);
+                    dom.toggleGeoLayer.classList.toggle('bg-inkSoft/40', !state.showGeoLayer);
+                    dom.toggleGeoKnob.classList.toggle('translate-x-4', state.showGeoLayer);
+                    dom.toggleGeoKnob.classList.toggle('translate-x-1', !state.showGeoLayer);
+                    if (state.showGeoLayer) {
+                        if (!map.hasLayer(geoPoliticalGroup)) map.addLayer(geoPoliticalGroup);
+                    } else if (map.hasLayer(geoPoliticalGroup)) {
+                        map.removeLayer(geoPoliticalGroup);
+                    }
+                });
+
+                dom.toggleRouteLayer.addEventListener('click', () => {
+                    state.showRouteLayer = !state.showRouteLayer;
+                    dom.toggleRouteLayer.setAttribute('aria-checked', String(state.showRouteLayer));
+                    dom.toggleRouteLayer.classList.toggle('bg-crimson', state.showRouteLayer);
+                    dom.toggleRouteLayer.classList.toggle('bg-inkSoft/40', !state.showRouteLayer);
+                    dom.toggleRouteKnob.classList.toggle('translate-x-4', state.showRouteLayer);
+                    dom.toggleRouteKnob.classList.toggle('translate-x-1', !state.showRouteLayer);
+                    if (state.showRouteLayer) {
+                        if (!map.hasLayer(routeGroup)) map.addLayer(routeGroup);
+                    } else if (map.hasLayer(routeGroup)) {
+                        map.removeLayer(routeGroup);
+                    }
+                });
+
+                // Điều hướng Chặng trước / Khởi hành tới Chặng tiếp theo
+                dom.btnPrevStop.addEventListener('click', () => {
+                    if (state.activeStopId > 1) attemptNavigateToStop(state.activeStopId - 1);
+                });
+                dom.btnNextStop.addEventListener('click', () => {
+                    if (state.activeStopId < JOURNEY_STOPS.length) attemptNavigateToStop(state.activeStopId + 1);
+                });
+
+                // Hủy di chuyển & Modal Quiz
+                dom.btnCancelTravel.addEventListener('click', cancelActiveTravel);
+                dom.btnCloseQuiz.addEventListener('click', cancelActiveTravel);
+                dom.btnContinueJourney.addEventListener('click', proceedToNextLeg);
+
+                // Toast
+                dom.btnCloseToast.addEventListener('click', hideToast);
+                dom.btnToastAction.addEventListener('click', () => {
+                    hideToast();
+                    if (state.maxUnlockedStopId < JOURNEY_STOPS.length) {
+                        startSegmentedJourney(state.maxUnlockedStopId + 1);
+                    }
+                });
+
+                // Mobile panel
+                dom.btnCloseMobilePanel.addEventListener('click', closeMobilePanel);
+                dom.btnOpenMobilePanel.addEventListener('click', openMobilePanel);
+
+                // Victory Modal
+                dom.btnOpenVictoryModal.addEventListener('click', () => dom.victoryModal.classList.remove('hidden'));
+                dom.btnCloseVictory.addEventListener('click', () => dom.victoryModal.classList.add('hidden'));
+                dom.btnVictoryOverview.addEventListener('click', () => {
+                    dom.victoryModal.classList.add('hidden');
+                    showOverview();
+                });
+
+                // Phím mũi tên trái/phải & phím Enter ở màn hình Menu
+                document.addEventListener('keydown', (e) => {
+                    if (!dom.menuScreen.classList.contains('menu-hidden')) {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            enterMapFromMenu();
+                        }
+                        return;
+                    }
+                    if (!dom.quizModal.classList.contains('hidden')) {
+                        if (e.key === 'Escape') {
+                            cancelActiveTravel();
+                        } else if (e.key === 'Enter' && state.travel.questionPassed) {
+                            e.preventDefault();
+                            proceedToNextLeg();
+                        }
+                        return;
+                    }
+                    if (!dom.victoryModal.classList.contains('hidden')) {
+                        if (e.key === 'Escape') dom.victoryModal.classList.add('hidden');
+                        return;
+                    }
+                    if (state.travel.active) return;
+
+                    if (e.key === 'ArrowRight' && state.activeStopId < JOURNEY_STOPS.length) {
+                        attemptNavigateToStop(state.activeStopId + 1);
+                    } else if (e.key === 'ArrowLeft' && state.activeStopId > 1) {
+                        attemptNavigateToStop(state.activeStopId - 1);
+                    }
+                });
+
+                window.addEventListener('resize', () => {
+                    if (map) setTimeout(() => map.invalidateSize(), 200);
+                });
+            }
+
+            /**
+             * Khởi chạy ứng dụng
+             */
+            window.addEventListener('DOMContentLoaded', () => {
+                initMenuBackground();
+                initEmberCanvas();
+                initMap();
+                bindEvents();
+                renderHistoricalEraLayer('1911-1920');
+                selectStop(1, false);
+                if (map) {
+                    map.setView(JOURNEY_STOPS[0].coords, 4);
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
